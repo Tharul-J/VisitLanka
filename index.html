@@ -1131,10 +1131,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!grid) return;
         
-        const provinceFilter = document.getElementById('province-filter').value;
-        const activityFilter = document.getElementById('activity-filter').value;
-        const durationFilter = document.getElementById('duration-filter').value;
-        const searchFilter = document.getElementById('search-input').value.toLowerCase();
+        // Get filter values with fallbacks
+        const provinceFilter = document.getElementById('province-filter')?.value || 'all';
+        const activityFilter = document.getElementById('activity-filter')?.value || 'all';
+        const durationFilter = document.getElementById('duration-filter')?.value || 'all';
+        const searchFilter = document.getElementById('search-input')?.value?.toLowerCase() || '';
         
         const filteredDests = destinations.filter(d => 
             (provinceFilter === 'all' || d.location === provinceFilter) &&
@@ -1198,10 +1199,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!grid) return;
         
-        const typeFilter = document.getElementById('tour-type-filter').value;
-        const priceFilter = document.getElementById('tour-price-filter').value;
-        const groupSizeFilter = document.getElementById('group-size-filter').value;
-        const searchFilter = document.getElementById('tour-search-input').value.toLowerCase();
+        // Get filter values with fallbacks
+        const typeFilter = document.getElementById('tour-type-filter')?.value || 'all';
+        const priceFilter = document.getElementById('tour-price-filter')?.value || 'all';
+        const groupSizeFilter = document.getElementById('group-size-filter')?.value || 'all';
+        const searchFilter = document.getElementById('tour-search-input')?.value?.toLowerCase() || '';
         
         const filteredTours = tours.filter(tour =>
             (typeFilter === 'all' || tour.type === typeFilter) &&
@@ -1925,6 +1927,17 @@ document.addEventListener('DOMContentLoaded', () => {
             renderUserBookings();
             renderUserWishlist();
         }
+        
+        // Setup filters and render content when navigating to destinations or tours
+        if (pageId === 'home-page') {
+            // Re-setup filters and render when going to home page (which includes destinations and tours)
+            setTimeout(() => {
+                setupDestinationFilters();
+                setupTourFilters();
+                renderDestinations();
+                renderTours();
+            }, 100);
+        }
     };
 
     const updateAdminStats = () => {
@@ -2168,7 +2181,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 navigateToPage('home-page');
                 setTimeout(() => {
                     const element = document.querySelector(href);
-                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                        
+                        // Setup filters when navigating to specific sections
+                        if (href === '#destinations') {
+                            setTimeout(() => {
+                                setupDestinationFilters();
+                                renderDestinations();
+                            }, 200);
+                        } else if (href === '#tours') {
+                            setTimeout(() => {
+                                setupTourFilters();
+                                renderTours();
+                            }, 200);
+                        }
+                    }
                 }, 0);
             }
             document.getElementById('mobile-menu').classList.add('hidden');
@@ -2660,15 +2688,85 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    ['province-filter', 'activity-filter', 'duration-filter', 'search-input'].forEach(id => document.getElementById(id)?.addEventListener('input', renderDestinations));
-    document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
+    // Setup event listeners for destination filters
+    const setupDestinationFilters = () => {
+        // Reset filters to default state first
+        const elements = ['province-filter', 'activity-filter', 'duration-filter', 'search-input'];
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (element.tagName === 'SELECT') {
+                    element.value = 'all';
+                } else if (element.tagName === 'INPUT') {
+                    element.value = '';
+                }
+            }
+        });
+        
+        // Setup event listeners
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                // Remove existing listeners to prevent duplicates
+                element.removeEventListener('input', renderDestinations);
+                element.removeEventListener('change', renderDestinations);
+                // Add both input and change events for better responsiveness
+                element.addEventListener('input', () => {
+                    renderDestinations(false); // Always reset pagination on filter change
+                });
+                element.addEventListener('change', () => {
+                    renderDestinations(false); // Always reset pagination on filter change
+                });
+            }
+        });
+        
+        const clearBtn = document.getElementById('clear-filters-btn');
+        if (clearBtn) {
+            clearBtn.removeEventListener('click', clearDestinationFilters);
+            clearBtn.addEventListener('click', clearDestinationFilters);
+        }
+    };
+    
+    const clearDestinationFilters = () => {
         document.getElementById('province-filter').value = 'all';
         document.getElementById('activity-filter').value = 'all';
         document.getElementById('duration-filter').value = 'all';
         document.getElementById('search-input').value = '';
         renderDestinations();
-    });
-    ['tour-type-filter', 'tour-price-filter', 'group-size-filter', 'tour-search-input'].forEach(id => document.getElementById(id)?.addEventListener('input', renderTours));
+    };
+    
+    // Setup event listeners for tour filters
+    const setupTourFilters = () => {
+        // Reset filters to default state first
+        const elements = ['tour-type-filter', 'tour-price-filter', 'group-size-filter', 'tour-search-input'];
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (element.tagName === 'SELECT') {
+                    element.value = 'all';
+                } else if (element.tagName === 'INPUT') {
+                    element.value = '';
+                }
+            }
+        });
+        
+        // Setup event listeners
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                // Remove existing listeners to prevent duplicates
+                element.removeEventListener('input', renderTours);
+                element.removeEventListener('change', renderTours);
+                // Add both input and change events for better responsiveness
+                element.addEventListener('input', () => {
+                    renderTours(false); // Always reset pagination on filter change
+                });
+                element.addEventListener('change', () => {
+                    renderTours(false); // Always reset pagination on filter change
+                });
+            }
+        });
+    };
 
     // --- INITIALIZATION ---
     const init = () => {
@@ -2686,9 +2784,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         navigateToPage('home-page');
         initHeroSlideshow();
-        renderDestinations();
-        renderTours();
-        renderGallery();
+        
+        // Setup filters with a small delay to ensure DOM is ready
+        setTimeout(() => {
+            setupDestinationFilters();
+            setupTourFilters();
+            renderDestinations();
+            renderTours();
+            renderGallery();
+        }, 100);
     };
 
     // Image preview functionality for destination and tour forms
