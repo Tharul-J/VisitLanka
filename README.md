@@ -21,4 +21,8 @@ Welcome to **Visit Lanka**! This project is a travel web application dedicated t
 
 ---
 
+<img width="2000" height="3000" alt="uiux design @ visitlanka" src="https://github.com/user-attachments/assets/019e1d79-f7a9-4208-958d-a90db0076646" />
+
+----
+
 © Tharul-J
