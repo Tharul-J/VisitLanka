@@ -1,0 +1,2752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visit Lanka - Interactive Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .lightbox-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 110;
+        }
+        .lightbox-content { max-width: 90%; max-height: 90%; }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 30px;
+            color: #fff;
+            cursor: pointer;
+        }
+        /* Logo styling for transparent backgrounds */
+        .logo-image {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            object-fit: contain;
+        }
+        .logo-image-circular {
+            background: rgba(0, 0, 0, 0) !important;
+            border: 0px solid transparent !important;
+            box-shadow: none !important;
+            object-fit: cover;
+            padding: 0 !important;
+            margin: 0;
+            outline: none !important;
+            border-radius: 50% !important;
+            width: auto;
+            height: auto;
+            aspect-ratio: 1/1;
+            /* If logo has black background, this will remove it */
+            filter: brightness(1.2) contrast(1.1);
+            mix-blend-mode: multiply;
+            opacity: 1 !important;
+        }
+        .logo-image-circular-clean {
+            background: rgba(255, 255, 255, 0) !important;
+            border: 0px solid rgba(255, 255, 255, 0) !important;
+            box-shadow: 0px 0px 0px rgba(255, 255, 255, 0) !important;
+            object-fit: cover;
+            padding: 0 !important;
+            margin: 0;
+            outline: 0px solid rgba(255, 255, 255, 0) !important;
+            border-radius: 50% !important;
+            width: auto;
+            height: auto;
+            aspect-ratio: 1/1;
+            filter: brightness(1.2) contrast(1.1) invert(0);
+            /* Alternative approach - crop to circular shape with 0% border opacity */
+            clip-path: circle(50% at 50% 50%);
+            -webkit-mask: radial-gradient(circle, white 50%, transparent 50%);
+            mask: radial-gradient(circle, white 50%, transparent 50%);
+        }
+        /* Custom Modal for Alerts/Confirms */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .custom-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .custom-modal {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 450px;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+        .custom-modal-overlay.visible .custom-modal {
+            transform: scale(1);
+        }
+        /* Hero Slideshow */
+        #hero-slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        .hero-slide.active {
+            opacity: 1;
+        }
+        .slider-navigation {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+        }
+        .slider-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        .slider-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+        .slider-arrow:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .slider-arrow.prev {
+            left: 30px;
+        }
+        .slider-arrow.next {
+            right: 30px;
+        }
+        @media (max-width: 768px) {
+            .slider-arrow {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+            .slider-arrow.prev {
+                left: 15px;
+            }
+            .slider-arrow.next {
+                right: 15px;
+            }
+            .slider-navigation {
+                bottom: 20px;
+            }
+        }
+        /* Admin Layout */
+        #admin-layout {
+            display: flex;
+        }
+        #admin-main-content {
+            flex-grow: 1;
+            background-color: #f1f5f9;
+        }
+        #admin-sidebar {
+            width: 280px;
+            flex-shrink: 0;
+        }
+        .admin-section {
+            display: none;
+        }
+        .admin-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800">
+
+    <!-- Header & Navigation -->
+    <header id="main-header" class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center relative">
+            <a href="#home" class="flex items-center text-2xl font-bold text-green-700 nav-link">
+                <img src="./images/logo.png" alt="Visit Lanka Logo" class="h-16 logo-image-circular-clean" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span style="display: none; font-weight: bold; color: #15803d;">Visit Lanka</span>
+            </a>
+            <div class="hidden md:flex space-x-8 items-center absolute left-1/2 -translate-x-1/2">
+                <a href="#home" class="text-gray-600 hover:text-green-700 nav-link">Home</a>
+                <a href="#destinations" class="text-gray-600 hover:text-green-700 nav-link">Destinations</a>
+                <a href="#tours" class="text-gray-600 hover:text-green-700 nav-link">Tours</a>
+                <a href="#gallery" class="text-gray-600 hover:text-green-700 nav-link">Gallery</a>
+                <a href="#contact" class="text-gray-600 hover:text-green-700 nav-link">Contact Us</a>
+                <a href="#" class="text-gray-600 hover:text-green-700 nav-link hidden" data-target="account">My Account</a>
+                <a href="#" class="text-gray-600 hover:text-green-700 nav-link hidden" data-target="admin">Admin</a>
+            </div>
+            <div class="flex items-center">
+                <div class="hidden md:block">
+                    <button id="login-btn" class="bg-green-700 text-white px-5 py-2 rounded-lg hover:bg-green-800 nav-link" data-target="login">Login</button>
+                    <button id="logout-btn" class="hidden bg-amber-500 text-white px-5 py-2 rounded-lg hover:bg-amber-600">Logout</button>
+                </div>
+                <button id="mobile-menu-button" class="md:hidden ml-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4 space-y-2 bg-white border-t">
+            <a href="#home" class="block text-gray-600 hover:text-green-700 nav-link">Home</a>
+            <a href="#destinations" class="block text-gray-600 hover:text-green-700 nav-link">Destinations</a>
+            <a href="#tours" class="block text-gray-600 hover:text-green-700 nav-link">Tours</a>
+            <a href="#gallery" class="block text-gray-600 hover:text-green-700 nav-link">Gallery</a>
+            <a href="#contact" class="block text-gray-600 hover:text-green-700 nav-link">Contact Us</a>
+            <a href="#" id="mobile-user-account-link" class="block text-gray-600 hover:text-green-700 nav-link hidden" data-target="account">My Account</a>
+            <a href="#" id="mobile-admin-link" class="block text-gray-600 hover:text-green-700 nav-link hidden" data-target="admin">Admin</a>
+            <div class="border-t pt-2 mt-2">
+                 <button id="mobile-login-btn" class="w-full text-left bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-800 nav-link" data-target="login">Login</button>
+                 <button id="mobile-logout-btn" class="w-full text-left hidden mt-2 bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Home Page Container -->
+        <div id="home-page" class="page-section active">
+            <!-- Home Hero Section -->
+            <section id="home" class="relative h-[90vh] flex flex-col justify-center items-center text-center text-white">
+                <div id="hero-slideshow">
+                    <!-- Slides will be populated by JavaScript -->
+                </div>
+                
+                <!-- Navigation arrows -->
+                <button class="slider-arrow prev" id="prevSlide">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="slider-arrow next" id="nextSlide">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                
+                <!-- Navigation dots -->
+                <div class="slider-navigation" id="sliderDots">
+                    <!-- Dots will be populated by JavaScript -->
+                </div>
+                
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative z-10 p-8 flex flex-col items-center">
+                    <img src="./images/logo.png" alt="Visit Lanka Logo" class="h-32 mb-6 logo-image-circular-clean" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display: none; text-align: center; margin-bottom: 1.5rem;">
+                        <span style="font-size: 2rem; font-weight: bold; color: #0d9488; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Visit Lanka</span>
+                    </div>
+                    <h1 class="text-5xl md:text-7xl font-extrabold mb-4 drop-shadow-lg">Visit Lanka</h1>
+                    <p class="text-xl md:text-2xl max-w-3xl drop-shadow-md mb-8">Explore the Pearl of the Indian Ocean</p>
+                    <p class="max-w-3xl text-gray-200 mb-10">Discover ancient temples, pristine beaches, lush tea plantations, and vibrant wildlife. Experience the rich culture and warm hospitality of Sri Lanka's diverse landscapes.</p>
+                    <div class="flex space-x-4">
+                        <a href="#destinations" class="bg-green-700 text-white px-8 py-3 rounded-lg hover:bg-green-800 transition-transform hover:scale-105 nav-link">Explore Destinations</a>
+                        <a href="#tours" class="bg-gray-700 bg-opacity-50 text-white px-8 py-3 rounded-lg hover:bg-opacity-70 transition-transform hover:scale-105 nav-link">View Packages</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Destinations Section -->
+            <section id="destinations" class="py-16">
+                <div class="container mx-auto px-6">
+                    <h2 class="text-4xl font-bold text-center mb-4">Explore Destinations</h2>
+                    <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">Here you can find a list of beautiful places to visit in Sri Lanka. Use the filters and search bar to find destinations that match your preferences.</p>
+                    <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label for="province-filter" class="block text-gray-700 font-medium mb-2">Filter by Province</label>
+                                    <select id="province-filter" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                        <option value="all">All Provinces</option>
+                                        <option value="Western">Western</option>
+                                        <option value="Central">Central</option>
+                                        <option value="Southern">Southern</option>
+                                        <option value="Northern">Northern</option>
+                                        <option value="Eastern">Eastern</option>
+                                        <option value="North Western">North Western</option>
+                                        <option value="North Central">North Central</option>
+                                        <option value="Uva">Uva</option>
+                                        <option value="Sabaragamuwa">Sabaragamuwa</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="activity-filter" class="block text-gray-700 font-medium mb-2">Filter by Activity</label>
+                                    <select id="activity-filter" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                        <option value="all">All Activities</option>
+                                        <option value="Adventure Sports">Adventure Sports</option>
+                                        <option value="Cultural & Historical">Cultural & Historical</option>
+                                        <option value="Nature & Wildlife">Nature & Wildlife</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="duration-filter" class="block text-gray-700 font-medium mb-2">Filter by Duration</label>
+                                    <select id="duration-filter" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                        <option value="all">Any Duration</option>
+                                        <option value="1-3 Days">1-3 Days</option>
+                                        <option value="4-7 Days">4-7 Days</option>
+                                        <option value="1-2 Weeks">1-2 Weeks</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <button id="clear-filters-btn" class="w-full bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300">Clear All Filters</button>
+                            </div>
+                        </div>
+                         <div class="mt-4">
+                            <label for="search-input" class="sr-only">Search</label>
+                            <input type="text" id="search-input" placeholder="Search by title or location..." class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                    </div>
+                    <div id="destinations-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8"></div>
+                    
+                    <!-- Load More Button for Destinations -->
+                    <div class="text-center">
+                        <button id="load-more-destinations" class="hidden bg-green-700 text-white px-8 py-3 rounded-lg hover:bg-green-800 transition-all duration-300 font-medium">
+                            <i class="fas fa-plus-circle mr-2"></i>Load More Destinations
+                        </button>
+                        <div id="destinations-loading" class="hidden">
+                            <i class="fas fa-spinner fa-spin text-teal-500 text-2xl"></i>
+                            <p class="text-gray-600 mt-2">Loading more destinations...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tours Section -->
+            <section id="tours" class="py-16 bg-gray-50">
+                <div class="container mx-auto px-6">
+                    <h2 class="text-4xl font-bold text-center mb-4">Browse Our Tours</h2>
+                    <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">Find your perfect adventure from our curated selection of tour packages across Sri Lanka.</p>
+                    <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label for="tour-type-filter" class="block text-gray-700 font-medium mb-2">Tour Type</label>
+                                <select id="tour-type-filter" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                    <option value="all">All Types</option>
+                                    <option value="Adventure">Adventure</option>
+                                    <option value="Cultural">Cultural</option>
+                                    <option value="Wildlife">Wildlife</option>
+                                    <option value="Beach">Beach</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="tour-price-filter" class="block text-gray-700 font-medium mb-2">Price Range</label>
+                                <select id="tour-price-filter" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                    <option value="all">All Prices</option>
+                                    <option value="low">Under $500</option>
+                                    <option value="medium">$500 - $1500</option>
+                                    <option value="high">Over $1500</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="group-size-filter" class="block text-gray-700 font-medium mb-2">Group Size</label>
+                                <select id="group-size-filter" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                    <option value="all">Any Size</option>
+                                    <option value="small">Small Group (1-4)</option>
+                                    <option value="medium">Medium Group (5-10)</option>
+                                    <option value="large">Large Group (10+)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="tour-search-input" class="block text-gray-700 font-medium mb-2">Search</label>
+                                <input type="text" id="tour-search-input" placeholder="Search tours..." class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="tours-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 mb-8"></div>
+                    
+                    <!-- Load More Button for Tours -->
+                    <div class="text-center">
+                        <button id="load-more-tours" class="hidden bg-green-700 text-white px-8 py-3 rounded-lg hover:bg-green-800 transition-all duration-300 font-medium">
+                            <i class="fas fa-plus-circle mr-2"></i>Load More Tours
+                        </button>
+                        <div id="tours-loading" class="hidden">
+                            <i class="fas fa-spinner fa-spin text-teal-500 text-2xl"></i>
+                            <p class="text-gray-600 mt-2">Loading more tours...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gallery Section -->
+            <section id="gallery" class="py-16">
+                <div class="container mx-auto px-6">
+                    <h2 class="text-4xl font-bold text-center mb-4">Image Gallery</h2>
+                    <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">A visual journey through the stunning landscapes and vibrant culture of Sri Lanka. All images are dynamically loaded from our curated collection.</p>
+                    <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                </div>
+            </section>
+
+            <!-- Contact Us Section -->
+            <section id="contact" class="py-16 bg-gray-50">
+                <div class="container mx-auto px-6">
+                    <h2 class="text-4xl font-bold text-center mb-4">Contact Us</h2>
+                    <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">Ready to start your Sri Lankan adventure? Get in touch with our travel experts to plan your perfect trip.</p>
+                    <div class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg grid md:grid-cols-2 gap-12">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-6">Send us a Message</h3>
+                            <form id="contact-form" class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label for="first-name" class="block text-gray-700 font-medium mb-1">First Name</label><input type="text" id="first-name" name="first-name" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></div>
+                                    <div><label for="last-name" class="block text-gray-700 font-medium mb-1">Last Name</label><input type="text" id="last-name" name="last-name" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></div>
+                                </div>
+                                <div><label for="email" class="block text-gray-700 font-medium mb-1">Email Address</label><input type="email" id="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></div>
+                                <div><label for="phone" class="block text-gray-700 font-medium mb-1">Phone Number</label><input type="tel" id="phone" name="phone" class="w-full px-4 py-2 border border-gray-300 rounded-md"></div>
+                                <div><label for="message" class="block text-gray-700 font-medium mb-1">Message</label><textarea id="message" name="message" rows="5" placeholder="Tell us about your travel preferences..." class="w-full px-4 py-2 border border-gray-300 rounded-md" required></textarea></div>
+                                <button type="submit" class="w-full bg-green-700 text-white py-3 px-4 rounded-lg hover:bg-green-800 transition duration-300">Send Message</button>
+                            </form>
+                        </div>
+                        <div class="space-y-6">
+                             <h3 class="text-2xl font-bold mb-6">Get in Touch</h3>
+                             <div>
+                                 <h4 class="font-semibold flex items-center"><i class="fas fa-map-marker-alt text-teal-500 mr-3"></i>Office Address</h4>
+                                 <p class="text-gray-600 pl-6">123 Galle Road, Colombo 03<br>Sri Lanka</p>
+                             </div>
+                             <div>
+                                 <h4 class="font-semibold flex items-center"><i class="fas fa-phone-alt text-teal-500 mr-3"></i>Phone Numbers</h4>
+                                 <p class="text-gray-600 pl-6">+94 11 234 5678<br>+94 77 123 4567</p>
+                             </div>
+                             <div>
+                                 <h4 class="font-semibold flex items-center"><i class="fas fa-envelope text-teal-500 mr-3"></i>Email Addresses</h4>
+                                 <p class="text-gray-600 pl-6">info@visitlanka.com<br>bookings@visitlanka.com</p>
+                             </div>
+                             <div>
+                                 <h4 class="font-semibold flex items-center"><i class="fas fa-clock text-teal-500 mr-3"></i>Business Hours</h4>
+                                 <p class="text-gray-600 pl-6">Monday - Friday: 9:00 AM - 6:00 PM<br>Saturday: 9:00 AM - 4:00 PM<br>Sunday: Closed</p>
+                             </div>
+                             <div>
+                                 <h4 class="font-semibold mb-2">Follow Us</h4>
+                                 <div class="flex space-x-3">
+                                    <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" class="w-10 h-10 flex items-center justify-center bg-green-700 text-white rounded-full hover:bg-green-800"><i class="fab fa-facebook-f"></i></a>
+                                    <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" class="w-10 h-10 flex items-center justify-center bg-green-700 text-white rounded-full hover:bg-green-800"><i class="fab fa-instagram"></i></a>
+                                    <a href="https://www.twitter.com" target="_blank" rel="noopener noreferrer" class="w-10 h-10 flex items-center justify-center bg-green-700 text-white rounded-full hover:bg-green-800"><i class="fab fa-twitter"></i></a>
+                                    <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" class="w-10 h-10 flex items-center justify-center bg-green-700 text-white rounded-full hover:bg-green-800"><i class="fab fa-youtube"></i></a>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Other Pages (Login, Admin, etc.) -->
+        <div id="other-pages">
+            <section id="login" class="page-section py-16">
+                 <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+                    <div id="login-view">
+                        <h3 class="text-3xl font-bold text-center mb-6">Login</h3>
+                        <form id="login-form">
+                            <div class="mb-4">
+                                <label for="login-email" class="block text-gray-700 mb-2">Email</label>
+                                <input type="email" id="login-email" class="w-full p-2 border rounded" value="admin@visitlanka.com">
+                                <p class="text-sm text-gray-500 mt-1">Hint: Use 'admin@visitlanka.com' or 'user@visitlanka.com'.</p>
+                            </div>
+                            <div class="mb-2">
+                                <label for="login-password" class="block text-gray-700 mb-2">Password</label>
+                                <input type="password" id="login-password" class="w-full p-2 border rounded" value="password">
+                                 <p class="text-sm text-gray-500 mt-1">Hint: Use 'password'.</p>
+                            </div>
+                            <div class="text-right mb-6"><a href="#" id="show-reset-password" class="text-sm text-teal-600 hover:underline">Forgot Password?</a></div>
+                            <button type="submit" class="w-full bg-green-700 text-white py-2 rounded hover:bg-green-800">Login</button>
+                        </form>
+                        <p class="text-center mt-4">Don't have an account? <a href="#" id="show-register" class="text-teal-600 hover:underline">Register here</a></p>
+                    </div>
+                    <div id="register-view" class="hidden">
+                        <h3 class="text-3xl font-bold text-center mb-6">Register</h3>
+                        <form id="register-form">
+                            <div class="mb-4"><label for="register-name" class="block text-gray-700 mb-2">Name</label><input type="text" id="register-name" class="w-full p-2 border rounded" required></div>
+                            <div class="mb-4"><label for="register-email" class="block text-gray-700 mb-2">Email</label><input type="email" id="register-email" class="w-full p-2 border rounded" required></div>
+                            <div class="mb-6"><label for="register-password" class="block text-gray-700 mb-2">Password</label><input type="password" id="register-password" class="w-full p-2 border rounded" required></div>
+                            <button type="submit" class="w-full bg-green-700 text-white py-2 rounded hover:bg-green-800">Register</button>
+                        </form>
+                        <p class="text-center mt-4">Already have an account? <a href="#" id="show-login" class="text-teal-600 hover:underline">Login here</a></p>
+                    </div>
+                    <div id="reset-password-view" class="hidden">
+                        <h3 class="text-3xl font-bold text-center mb-6">Reset Password</h3>
+                        <p class="text-center text-gray-600 mb-4">Enter your email address to receive a password reset link.</p>
+                        <form id="reset-password-form">
+                            <div class="mb-6"><label for="reset-email" class="block text-gray-700 mb-2">Email</label><input type="email" id="reset-email" class="w-full p-2 border rounded" required></div>
+                            <button type="submit" class="w-full bg-green-700 text-white py-2 rounded hover:bg-green-800">Send Reset Link</button>
+                        </form>
+                        <p class="text-center mt-4"><a href="#" id="back-to-login" class="text-teal-600 hover:underline">Back to Login</a></p>
+                    </div>
+                </div>
+            </section>
+            <section id="account" class="page-section py-16">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-6xl mx-auto">
+                        <h1 class="text-4xl font-bold text-center mb-8">My Account</h1>
+                        
+                        <!-- User Profile Section -->
+                        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                            <h2 class="text-2xl font-bold mb-6">Profile Information</h2>
+                            
+                            <!-- Display Mode -->
+                            <div id="profile-display-mode">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">Name</label>
+                                        <p id="user-profile-name" class="text-lg text-gray-900">-</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">Email</label>
+                                        <p id="user-profile-email" class="text-lg text-gray-900">-</p>
+                                    </div>
+                                </div>
+                                <button id="edit-profile-btn" class="mt-4 bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800">Edit Profile</button>
+                            </div>
+                            
+                            <!-- Edit Mode -->
+                            <div id="profile-edit-mode" class="hidden">
+                                <form id="edit-profile-form">
+                                    <div class="grid md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="edit-user-name" class="block text-gray-700 font-medium mb-2">Name</label>
+                                            <input type="text" id="edit-user-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                                        </div>
+                                        <div>
+                                            <label for="edit-user-email" class="block text-gray-700 font-medium mb-2">Email</label>
+                                            <input type="email" id="edit-user-email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                                        </div>
+                                    </div>
+                                    <div class="grid md:grid-cols-2 gap-6 mt-4">
+                                        <div>
+                                            <label for="edit-user-password" class="block text-gray-700 font-medium mb-2">New Password (optional)</label>
+                                            <input type="password" id="edit-user-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="Leave blank to keep current password">
+                                        </div>
+                                        <div>
+                                            <label for="edit-user-confirm-password" class="block text-gray-700 font-medium mb-2">Confirm New Password</label>
+                                            <input type="password" id="edit-user-confirm-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="Confirm new password">
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4 mt-6">
+                                        <button type="submit" class="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800">Save Changes</button>
+                                        <button type="button" id="cancel-edit-profile-btn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- My Bookings Section -->
+                        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                            <h2 class="text-2xl font-bold mb-6">My Bookings</h2>
+                            <div id="user-bookings-container">
+                                <div id="no-user-bookings" class="text-center py-12">
+                                    <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
+                                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No Bookings Yet</h3>
+                                    <p class="text-gray-500 mb-6">You haven't made any bookings yet. Explore our tours and start your adventure!</p>
+                                    <a href="#tours" class="bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-800 nav-link">Browse Tours</a>
+                                </div>
+                                <div id="user-bookings-list" class="space-y-4"></div>
+                            </div>
+                        </div>
+
+                        <!-- My Wishlist Section -->
+                        <div class="bg-white rounded-xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-6">My Wishlist</h2>
+                            <div id="user-wishlist-container">
+                                <div id="no-user-wishlist" class="text-center py-12">
+                                    <i class="fas fa-heart text-6xl text-gray-300 mb-4"></i>
+                                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No Wishlist Items Yet</h3>
+                                    <p class="text-gray-500 mb-6">You haven't added any destinations to your wishlist yet. Explore destinations and save your favorites!</p>
+                                    <a href="#destinations" class="bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-800 nav-link">Browse Destinations</a>
+                                </div>
+                                <div id="user-wishlist-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="admin" class="page-section">
+                <div id="admin-layout">
+                     <aside id="admin-sidebar" class="bg-gray-800 text-white p-6 min-h-screen">
+                        <div class="text-center mb-12">
+                            <img src="./images/logo.png" alt="Admin Logo" class="h-16 mx-auto mb-4 logo-image-circular" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div style="display: none; margin-bottom: 1rem;">
+                                <span style="font-size: 1.5rem; font-weight: bold; color: #0d9488;">Visit Lanka</span>
+                            </div>
+                            <h2 id="admin-user-name" class="text-xl font-bold">Admin User</h2>
+                            <p id="admin-user-email" class="text-sm text-gray-400">admin@visitlanka.com</p>
+                        </div>
+                        <nav class="space-y-4">
+                            <a href="#" class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 admin-nav-link" data-target="admin-dashboard"><i class="fas fa-tachometer-alt w-6 mr-3"></i>Dashboard</a>
+                            <a href="#" class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 admin-nav-link" data-target="admin-destinations"><i class="fas fa-map-marked-alt w-6 mr-3"></i>Destinations</a>
+                            <a href="#" class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 admin-nav-link" data-target="admin-tours"><i class="fas fa-route w-6 mr-3"></i>Tours</a>
+                            <a href="#" class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 admin-nav-link" data-target="admin-gallery"><i class="fas fa-images w-6 mr-3"></i>Gallery</a>
+                            <a href="#" class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 admin-nav-link" data-target="admin-bookings"><i class="fas fa-book-open w-6 mr-3"></i>Bookings</a>
+                            <a href="#" class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700 admin-nav-link" data-target="admin-profile"><i class="fas fa-user-edit w-6 mr-3"></i>My Profile</a>
+                            <a href="#" id="admin-logout-btn" class="flex items-center px-4 py-2 rounded-md hover:bg-gray-700"><i class="fas fa-sign-out-alt w-6 mr-3"></i>Logout</a>
+                        </nav>
+                    </aside>
+                    <div id="admin-main-content" class="p-8 w-full">
+                        <!-- Admin Dashboard -->
+                        <div id="admin-dashboard" class="admin-section">
+                            <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                                    <i class="fas fa-users text-3xl text-teal-500 mr-4"></i>
+                                    <div>
+                                        <p class="text-gray-500">Total Users</p>
+                                        <p id="total-users" class="text-2xl font-bold">0</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                                    <i class="fas fa-map-marked-alt text-3xl text-teal-500 mr-4"></i>
+                                    <div>
+                                        <p class="text-gray-500">Total Destinations</p>
+                                        <p id="total-destinations" class="text-2xl font-bold">0</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
+                                    <i class="fas fa-book-open text-3xl text-teal-500 mr-4"></i>
+                                    <div>
+                                        <p class="text-gray-500">Total Bookings</p>
+                                        <p id="total-bookings" class="text-2xl font-bold">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                                <h3 class="text-2xl font-bold mb-4">Content Overview</h3>
+                                <div class="chart-container" style="position: relative; height:40vh; width:100%; max-width: 600px; margin: auto;">
+                                    <canvas id="destinationsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Manage Destinations -->
+                        <div id="admin-destinations" class="admin-section">
+                             <h1 class="text-3xl font-bold mb-6">Manage Destinations</h1>
+                             <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                                <table class="w-full text-left min-w-[700px]">
+                                    <thead><tr class="bg-gray-100"><th class="p-3">Image</th><th class="p-3">Title</th><th class="p-3">Location</th><th class="p-3">Author</th><th class="p-3">Actions</th></tr></thead>
+                                    <tbody id="admin-destinations-table-body"></tbody>
+                                </table>
+                                <div class="mt-4"><button class="bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-800" id="add-destination-btn">Add New Destination</button></div>
+                            </div>
+                        </div>
+                        <!-- Manage Tours -->
+                        <div id="admin-tours" class="admin-section">
+                             <h1 class="text-3xl font-bold mb-6">Manage Tours</h1>
+                             <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                                <table class="w-full text-left min-w-[700px]">
+                                    <thead><tr class="bg-gray-100"><th class="p-3">Image</th><th class="p-3">Tour Name</th><th class="p-3">Price</th><th class="p-3">Actions</th></tr></thead>
+                                    <tbody id="admin-tours-table-body"></tbody>
+                                </table>
+                                <div class="mt-4"><button class="bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-800" id="add-tour-btn">Add New Tour</button></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Manage Gallery -->
+                        <div id="admin-gallery" class="admin-section">
+                            <h1 class="text-3xl font-bold mb-6">Manage Gallery</h1>
+                            
+                            <!-- Add New Image Form -->
+                            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                                <h2 class="text-xl font-bold mb-4">Add New Image</h2>
+                                <form id="add-gallery-form" class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="gallery-title" class="block text-gray-700 font-medium mb-2">Image Title</label>
+                                        <input type="text" id="gallery-title" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                                    </div>
+                                    <div>
+                                        <label for="gallery-category" class="block text-gray-700 font-medium mb-2">Category</label>
+                                        <select id="gallery-category" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                                            <option value="">Select Category</option>
+                                            <option value="Cultural">Cultural</option>
+                                            <option value="Nature">Nature</option>
+                                            <option value="Beach">Beach</option>
+                                            <option value="Wildlife">Wildlife</option>
+                                            <option value="Adventure">Adventure</option>
+                                        </select>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label for="gallery-description" class="block text-gray-700 font-medium mb-2">Description</label>
+                                        <textarea id="gallery-description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500" required></textarea>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label for="gallery-url" class="block text-gray-700 font-medium mb-2">Image URL (e.g., ./images/filename.png)</label>
+                                        <input type="url" id="gallery-url" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="./images/example.png" required>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <button type="submit" class="bg-green-700 text-white px-6 py-2 rounded-md hover:bg-green-800">Add Image</button>
+                                        <button type="button" id="cancel-gallery-add" class="ml-3 bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Gallery Images Grid -->
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h2 class="text-xl font-bold mb-4">Gallery Images</h2>
+                                <div id="admin-gallery-grid" class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    <!-- Gallery items will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                         <!-- Manage Bookings -->
+                        <div id="admin-bookings" class="admin-section">
+                             <h1 class="text-3xl font-bold mb-6">Manage Bookings</h1>
+                             <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                                <table class="w-full text-left min-w-[600px]">
+                                    <thead><tr class="bg-gray-100"><th class="p-3">Tour</th><th class="p-3">User</th><th class="p-3">Guests</th><th class="p-3">Date</th></tr></thead>
+                                    <tbody id="admin-bookings-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Admin Profile -->
+                        <div id="admin-profile" class="admin-section">
+                             <h1 class="text-3xl font-bold mb-6">My Profile</h1>
+                             <div class="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-md">
+                                <form id="admin-profile-form">
+                                    <div class="mb-4">
+                                        <label for="admin-profile-name" class="block text-gray-700 font-medium mb-2">Name</label>
+                                        <input type="text" id="admin-profile-name" class="w-full px-4 py-2 border rounded-md" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="admin-profile-email" class="block text-gray-700 font-medium mb-2">Email</label>
+                                        <input type="email" id="admin-profile-email" class="w-full px-4 py-2 border rounded-md" disabled>
+                                    </div>
+                                    <div class="mb-6">
+                                        <label for="admin-profile-password" class="block text-gray-700 font-medium mb-2">New Password (optional)</label>
+                                        <input type="password" id="admin-profile-password" class="w-full px-4 py-2 border rounded-md">
+                                    </div>
+                                    <button type="submit" class="w-full bg-green-700 text-white py-2 px-4 rounded-md hover:bg-green-800">Update Profile</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="post-destination" class="page-section py-16">
+                 <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold text-center mb-6" id="post-destination-form-title">Add New Destination</h2>
+                    <form id="post-destination-form">
+                        <input type="hidden" id="post-destination-id" value="">
+                        <div class="mb-4"><label for="post-destination-title" class="block text-gray-700 font-medium mb-2">Destination Title</label><input type="text" id="post-destination-title" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></div>
+                        <div class="mb-4"><label for="post-destination-location" class="block text-gray-700 font-medium mb-2">Location / Province</label><input type="text" id="post-destination-location" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></div>
+                        <div class="mb-4"><label for="post-destination-activities" class="block text-gray-700 font-medium mb-2">Activities (Comma-separated)</label><input type="text" id="post-destination-activities" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="e.g., Hiking, Cultural, Wildlife"></div>
+                        <div class="mb-4"><label for="post-destination-duration" class="block text-gray-700 font-medium mb-2">Trip Duration</label><select id="post-destination-duration" class="w-full px-4 py-2 border border-gray-300 rounded-md"><option value="">Select Duration</option><option value="1-3 Days">1-3 Days</option><option value="4-7 Days">4-7 Days</option><option value="1-2 Weeks">1-2 Weeks</option></select></div>
+                        <div class="mb-4"><label for="post-destination-short-desc" class="block text-gray-700 font-medium mb-2">Short Description</label><textarea id="post-destination-short-desc" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></textarea></div>
+                        <div class="mb-6">
+                            <label for="post-destination-images-url" class="block text-gray-700 font-medium mb-2">Image URL</label>
+                            <input type="text" id="post-destination-images-url" placeholder="https://..." class="w-full px-4 py-2 border border-gray-300 rounded-md mb-3">
+                            <!-- Image Preview -->
+                            <div id="destination-image-preview" class="hidden">
+                                <p class="text-sm text-gray-600 mb-2">Current Image Preview:</p>
+                                <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                    <img id="destination-preview-img" src="" alt="Destination preview" class="w-full max-w-xs h-48 object-cover rounded-md mx-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="text-center text-gray-500 text-sm py-8 hidden">Image not available</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button type="submit" id="post-destination-submit-btn" class="w-full bg-green-700 text-white py-2 px-4 rounded-md hover:bg-green-800">Submit</button>
+                            <button type="button" id="cancel-destination-post" class="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+            <section id="post-tour" class="page-section py-16">
+                 <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold text-center mb-6" id="post-tour-form-title">Add New Tour</h2>
+                    <form id="post-tour-form">
+                        <input type="hidden" id="post-tour-id" value="">
+                        <div class="mb-4"><label for="post-tour-name" class="block text-gray-700 font-medium mb-2">Tour Name</label><input type="text" id="post-tour-name" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></div>
+                        <div class="mb-4"><label for="post-tour-type" class="block text-gray-700 font-medium mb-2">Tour Type</label>
+                            <select id="post-tour-type" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                                <option value="Adventure">Adventure</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Wildlife">Wildlife</option>
+                                <option value="Beach">Beach</option>
+                            </select>
+                        </div>
+                        <div class="mb-4"><label for="post-tour-price" class="block text-gray-700 font-medium mb-2">Price (USD)</label><input type="number" id="post-tour-price" class="w-full px-4 py-2 border border-gray-300 rounded-md" required></div>
+                        <div class="mb-4"><label for="post-tour-group-size" class="block text-gray-700 font-medium mb-2">Group Size</label>
+                            <select id="post-tour-group-size" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                                <option value="small">Small (1-4)</option>
+                                <option value="medium">Medium (5-10)</option>
+                                <option value="large">Large (10+)</option>
+                            </select>
+                        </div>
+                        <div class="mb-6">
+                            <label for="post-tour-image" class="block text-gray-700 font-medium mb-2">Image URL</label>
+                            <input type="url" id="post-tour-image" placeholder="https://..." class="w-full px-4 py-2 border border-gray-300 rounded-md mb-3" required>
+                            <!-- Image Preview -->
+                            <div id="tour-image-preview" class="hidden">
+                                <p class="text-sm text-gray-600 mb-2">Current Image Preview:</p>
+                                <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                    <img id="tour-preview-img" src="" alt="Tour preview" class="w-full max-w-xs h-48 object-cover rounded-md mx-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="text-center text-gray-500 text-sm py-8 hidden">Image not available</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button type="submit" id="post-tour-submit-btn" class="w-full bg-green-700 text-white py-2 px-4 rounded-md hover:bg-green-800">Submit</button>
+                            <button type="button" id="cancel-tour-post" class="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+            
+            <!-- Tour Detail Page -->
+            <section id="tour-detail" class="page-section py-16">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-4xl mx-auto">
+                        <!-- Tour Detail Content -->
+                        <div id="tour-detail-content" class="bg-white rounded-xl shadow-lg overflow-hidden">
+                            <!-- Content will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Destination Detail Page -->
+            <section id="destination-detail" class="page-section py-16">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-4xl mx-auto">
+                        <!-- Destination Detail Content -->
+                        <div id="destination-detail-content" class="bg-white rounded-xl shadow-lg overflow-hidden">
+                            <!-- Content will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Booking Confirmation Page -->
+            <section id="booking-confirmation" class="page-section py-16">
+                <div class="container mx-auto px-6">
+                    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 text-center">
+                        <div class="mb-6">
+                            <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                            <h1 class="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h1>
+                            <p class="text-gray-600">Thank you for choosing Visit Lanka. Your adventure awaits!</p>
+                        </div>
+                        
+                        <div id="booking-details" class="bg-gray-50 rounded-lg p-6 mb-6 text-left">
+                            <!-- Booking details will be populated here -->
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a href="#" class="bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-800 nav-link" data-target="account">View My Bookings</a>
+                            <a href="#tours" class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 nav-link">Browse More Tours</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 pt-16 pb-8">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div class="md:col-span-1">
+                    <img src="./images/logo.png" alt="Visit Lanka Logo" class="h-12 mb-4 logo-image-circular" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display: none; margin-bottom: 1rem;">
+                        <span style="font-size: 1.5rem; font-weight: bold; color: #0d9488;">Visit Lanka</span>
+                    </div>
+                    <p class="text-gray-400">Explore the Pearl of the Indian Ocean with our expertly crafted travel experiences.</p>
+                     <div class="flex space-x-4 mt-4">
+                        <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.twitter.com" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white"><i class="fab fa-youtube"></i></a>
+                     </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#home" class="hover:text-white nav-link">Home</a></li>
+                        <li><a href="#destinations" class="hover:text-white nav-link">Destinations</a></li>
+                        <li><a href="#tours" class="hover:text-white nav-link">Tours</a></li>
+                        <li><a href="#gallery" class="hover:text-white nav-link">Gallery</a></li>
+                        <li><a href="#contact" class="hover:text-white nav-link">Contact</a></li>
+                    </ul>
+                </div>
+                 <div>
+                    <h4 class="font-bold text-white mb-4">Contact Info</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-start"><i class="fas fa-map-marker-alt mt-1 mr-2"></i><span>123 Galle Road, Colombo 03</span></li>
+                        <li class="flex items-start"><i class="fas fa-phone-alt mt-1 mr-2"></i><span>+94 11 234 5678</span></li>
+                        <li class="flex items-start"><i class="fas fa-envelope mt-1 mr-2"></i><span>info@visitlanka.com</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 pt-6 text-center text-gray-500">
+                <p>&copy; 2025 Visit Lanka. All rights reserved. Explore the Pearl of the Indian Ocean.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lightbox Modal for Gallery Images -->
+    <div id="lightbox-modal" class="lightbox-modal">
+        <span class="lightbox-close">&times;</span>
+        <img class="lightbox-content rounded-lg" id="lightbox-image" alt="Enlarged gallery view">
+    </div>
+
+    <!-- Custom Modal for Notifications and Confirmations -->
+    <div id="custom-modal" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <h3 id="modal-title" class="text-xl font-bold mb-4"></h3>
+            <p id="modal-message" class="text-gray-600 mb-6"></p>
+            <div id="modal-buttons" class="flex justify-end space-x-4">
+                <!-- Buttons are added dynamically -->
+            </div>
+        </div>
+    </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- DATA (Simulated Database) ---
+    let users = [
+        { id: 1, name: 'Admin User', email: 'admin@visitlanka.com', password: 'password', role: 'admin' },
+        { id: 2, name: 'Regular User', email: 'user@visitlanka.com', password: 'password', role: 'user' }
+    ];
+
+    let destinations = [
+        { id: 1, userId: 1, title: 'Sigiriya Rock Fortress', location: 'Central', activities: ['Cultural & Historical', 'Adventure Sports'], duration: '1-3 Days', shortDesc: 'Ancient rock fortress with frescoes and panoramic views.', images: ['./images/1.png'] },
+        { id: 2, userId: 1, title: 'Yala National Park', location: 'Southern', activities: ['Nature & Wildlife', 'Adventure Sports'], duration: '1-3 Days', shortDesc: 'Famous for wildlife, especially leopards and elephants.', images: ['./images/2.png'] },
+        { id: 3, userId: 1, title: 'Ella', location: 'Uva', activities: ['Nature & Wildlife', 'Adventure Sports'], duration: '4-7 Days', shortDesc: 'Charming town in the highlands with stunning mountain views.', images: ['./images/3.png'] },
+        { id: 4, userId: 1, title: 'Galle Fort', location: 'Southern', activities: ['Cultural & Historical'], duration: '1-3 Days', shortDesc: 'A UNESCO World Heritage site with Dutch colonial buildings.', images: ['./images/4.png'] },
+        { id: 5, userId: 1, title: 'Temple of the Tooth', location: 'Central', activities: ['Cultural & Historical'], duration: '1-3 Days', shortDesc: 'A sacred Buddhist temple in the city of Kandy.', images: ['./images/5.png'] },
+        { id: 6, userId: 1, title: 'Mirissa Beach', location: 'Southern', activities: ['Relaxation & Wellness', 'Adventure Sports'], duration: '4-7 Days', shortDesc: 'Famous for whale and dolphin watching.', images: ['./images/6.png'] },
+        // Additional destinations to demonstrate load more functionality
+        { id: 7, userId: 1, title: 'Nuwara Eliya', location: 'Central', activities: ['Nature & Wildlife'], duration: '4-7 Days', shortDesc: 'Hill station known as Little England with tea plantations.', images: ['./images/7.png'] },
+        { id: 8, userId: 1, title: 'Polonnaruwa', location: 'North Central', activities: ['Cultural & Historical'], duration: '1-3 Days', shortDesc: 'Ancient capital with well-preserved ruins and monuments.', images: ['./images/8.png'] },
+        { id: 9, userId: 1, title: 'Arugam Bay', location: 'Eastern', activities: ['Adventure Sports'], duration: '4-7 Days', shortDesc: 'World-renowned surfing destination with pristine beaches.', images: ['./images/9.png'] },
+        { id: 10, userId: 1, title: 'Anuradhapura', location: 'North Central', activities: ['Cultural & Historical'], duration: '1-3 Days', shortDesc: 'Ancient sacred city with Buddhist temples and dagobas.', images: ['./images/10.png'] },
+        { id: 11, userId: 1, title: 'Horton Plains', location: 'Central', activities: ['Nature & Wildlife', 'Adventure Sports'], duration: '1-3 Days', shortDesc: 'National park famous for Worlds End cliff and Bakers Falls.', images: ['./images/11.png'] },
+        { id: 12, userId: 1, title: 'Trincomalee', location: 'Eastern', activities: ['Nature & Wildlife', 'Adventure Sports'], duration: '4-7 Days', shortDesc: 'Historic port city with beautiful beaches and hot springs.', images: ['./images/12.png'] },
+    ];
+    
+    let tours = [
+        { 
+            id: 1, 
+            name: 'Highland Adventure', 
+            type: 'Adventure', 
+            price: 1200, 
+            groupSize: 'small', 
+            image: './images/13.png',
+            description: 'Embark on an unforgettable highland adventure through the misty mountains of Sri Lanka. Experience breathtaking views, ancient temples, and traditional village life.',
+            highlights: ['Ella Rock hiking', 'Nine Arches Bridge', 'Tea plantation visit', 'Little Adams Peak'],
+            duration: '3 days'
+        },
+        { 
+            id: 2, 
+            name: 'Ancient Kingdoms', 
+            type: 'Cultural', 
+            price: 800, 
+            groupSize: 'medium', 
+            image: './images/14.png',
+            description: 'Journey through Sri Lanka\'s rich cultural heritage visiting ancient kingdoms, UNESCO World Heritage sites, and sacred temples.',
+            highlights: ['Sigiriya Rock Fortress', 'Dambulla Cave Temple', 'Polonnaruwa ruins', 'Temple of the Tooth'],
+            duration: '4 days'
+        },
+        { 
+            id: 3, 
+            name: 'Leopard Safari', 
+            type: 'Wildlife', 
+            price: 600, 
+            groupSize: 'small', 
+            image: './images/15.png',
+            description: 'Experience the thrill of wildlife photography and animal spotting in Yala National Park, home to the highest density of leopards in the world.',
+            highlights: ['Yala National Park safari', 'Leopard spotting', 'Elephant encounters', 'Bird watching'],
+            duration: '2 days'
+        },
+        { 
+            id: 4, 
+            name: 'Southern Coast Explorer', 
+            type: 'Beach', 
+            price: 1800, 
+            groupSize: 'large', 
+            image: './images/16.png',
+            description: 'Discover the pristine beaches of southern Sri Lanka, enjoy whale watching, and explore the historic Galle Fort.',
+            highlights: ['Whale watching in Mirissa', 'Galle Fort exploration', 'Beach relaxation', 'Stilt fishing in Koggala'],
+            duration: '5 days'
+        },
+        // Additional tours to demonstrate load more functionality
+        { 
+            id: 5, 
+            name: 'Tea Country Express', 
+            type: 'Cultural', 
+            price: 950, 
+            groupSize: 'medium', 
+            image: './images/17.png',
+            description: 'Journey through the emerald hills of Sri Lanka\'s tea country, visiting plantations and experiencing local culture.',
+            highlights: ['Tea factory tours', 'Scenic train rides', 'Mountain hiking', 'Local village visits'],
+            duration: '3 days'
+        },
+        { 
+            id: 6, 
+            name: 'Surf & Sand Adventure', 
+            type: 'Adventure', 
+            price: 750, 
+            groupSize: 'small', 
+            image: './images/18.png',
+            description: 'Perfect your surfing skills on the legendary waves of Arugam Bay while enjoying the laid-back beach lifestyle.',
+            highlights: ['Surfing lessons', 'Beach camping', 'Local seafood', 'Sunset photography'],
+            duration: '4 days'
+        },
+        { 
+            id: 7, 
+            name: 'Sacred Cities Pilgrimage', 
+            type: 'Cultural', 
+            price: 680, 
+            groupSize: 'large', 
+            image: './images/19.png',
+            description: 'Explore the sacred cities of Anuradhapura and Polonnaruwa, discovering ancient Buddhist heritage and architecture.',
+            highlights: ['Ancient dagobas', 'Buddhist temples', 'Archaeological sites', 'Meditation sessions'],
+            duration: '3 days'
+        },
+        { 
+            id: 8, 
+            name: 'Eastern Beaches Getaway', 
+            type: 'Beach', 
+            price: 1100, 
+            groupSize: 'medium', 
+            image: './images/20.png',
+            description: 'Discover the untouched beauty of Sri Lanka\'s eastern coastline with pristine beaches and crystal-clear waters.',
+            highlights: ['Trincomalee beaches', 'Snorkeling', 'Hot springs visit', 'Dolphin watching'],
+            duration: '4 days'
+        },
+    ];
+    
+    let bookings = [];
+    let chartInstance = null;
+    let currentUser = null;
+    let currentTour = null;
+    let currentDestination = null;
+    
+    // Wishlist data structure: array of objects with userId and destinationId
+    let wishlists = [
+        // Test data - can be removed later
+        // { id: 1, userId: 2, destinationId: 1, addedDate: '2025-08-09T10:00:00.000Z' }
+    ];
+    
+    // Gallery data structure: array of gallery images
+    let galleryImages = [
+        { id: 1, title: 'Sigiriya Rock Fortress', description: 'Ancient rock fortress with stunning views', url: './images/1.png', category: 'Cultural' },
+        { id: 2, title: 'Yala National Park', description: 'Wildlife safari destination', url: './images/2.png', category: 'Wildlife' },
+        { id: 3, title: 'Ella Hills', description: 'Beautiful hill country landscape', url: './images/3.png', category: 'Nature' },
+        { id: 4, title: 'Galle Fort', description: 'Historic Dutch colonial fort', url: './images/4.png', category: 'Cultural' },
+        { id: 5, title: 'Temple of the Tooth', description: 'Sacred Buddhist temple', url: './images/5.png', category: 'Cultural' },
+        { id: 6, title: 'Mirissa Beach', description: 'Pristine southern beach', url: './images/6.png', category: 'Beach' },
+        { id: 7, title: 'Nuwara Eliya', description: 'Tea country hills', url: './images/7.png', category: 'Nature' },
+        { id: 8, title: 'Polonnaruwa', description: 'Ancient capital ruins', url: './images/8.png', category: 'Cultural' },
+        { id: 9, title: 'Arugam Bay', description: 'Surfing paradise', url: './images/9.png', category: 'Beach' },
+        { id: 10, title: 'Anuradhapura', description: 'Sacred ancient city', url: './images/10.png', category: 'Cultural' },
+        { id: 11, title: 'Horton Plains', description: 'National park with Worlds End', url: './images/11.png', category: 'Nature' },
+        { id: 12, title: 'Trincomalee', description: 'Eastern coast beaches', url: './images/12.png', category: 'Beach' }
+    ];
+    
+    // Pagination variables
+    let destinationsPerPage = 6;
+    let toursPerPage = 6;
+    let currentDestinationsPage = 1;
+    let currentToursPage = 1;
+
+    // --- MODAL FUNCTIONS ---
+    const showModal = (title, message, buttons) => {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').innerHTML = message;
+        const buttonsContainer = document.getElementById('modal-buttons');
+        buttonsContainer.innerHTML = '';
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.textContent = btn.text;
+            button.className = btn.class;
+            button.onclick = () => { closeModal(); if (btn.action) btn.action(); };
+            buttonsContainer.appendChild(button);
+        });
+        document.getElementById('custom-modal').classList.add('visible');
+    };
+    const closeModal = () => document.getElementById('custom-modal').classList.remove('visible');
+    const showAlert = (title, message) => showModal(title, message, [{ text: 'OK', class: 'bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-800' }]);
+    const showConfirm = (title, message, onConfirm) => showModal(title, message, [
+        { text: 'Cancel', class: 'bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300' },
+        { text: 'Confirm', class: 'bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600', action: onConfirm }
+    ]);
+
+    // --- RENDER FUNCTIONS ---
+    const renderDestinations = (loadMore = false) => {
+        const grid = document.getElementById('destinations-grid');
+        const loadMoreBtn = document.getElementById('load-more-destinations');
+        const loadingDiv = document.getElementById('destinations-loading');
+        
+        if (!grid) return;
+        
+        const provinceFilter = document.getElementById('province-filter').value;
+        const activityFilter = document.getElementById('activity-filter').value;
+        const durationFilter = document.getElementById('duration-filter').value;
+        const searchFilter = document.getElementById('search-input').value.toLowerCase();
+        
+        const filteredDests = destinations.filter(d => 
+            (provinceFilter === 'all' || d.location === provinceFilter) &&
+            (activityFilter === 'all' || d.activities.includes(activityFilter)) &&
+            (durationFilter === 'all' || d.duration === durationFilter) &&
+            (d.title.toLowerCase().includes(searchFilter) || d.location.toLowerCase().includes(searchFilter))
+        );
+
+        // Reset pagination when filters change
+        if (!loadMore) {
+            currentDestinationsPage = 1;
+            grid.innerHTML = '';
+        }
+
+        const startIndex = loadMore ? (currentDestinationsPage - 1) * destinationsPerPage : 0;
+        const endIndex = currentDestinationsPage * destinationsPerPage;
+        const destinationsToShow = filteredDests.slice(startIndex, endIndex);
+        
+        if (filteredDests.length === 0) {
+            grid.innerHTML = `<p class="text-gray-600 md:col-span-3 text-center">No destinations found.</p>`;
+            loadMoreBtn.classList.add('hidden');
+            return;
+        }
+
+        const destinationCards = destinationsToShow.map(dest => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col transform hover:-translate-y-1 transition-transform cursor-pointer destination-card" data-destination-id="${dest.id}">
+                <img src="${dest.images[0]}" alt="${dest.title}" class="w-full h-56 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found';">
+                <div class="p-6 flex-grow flex flex-col">
+                    <h3 class="text-xl font-bold mb-2">${dest.title}</h3>
+                    <p class="text-sm text-gray-500 mb-3">📍 ${dest.location} Province</p>
+                    <p class="text-gray-600 text-sm mb-4 flex-grow">${dest.shortDesc}</p>
+                    <div class="mt-auto">
+                        <span class="inline-block bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm font-medium">
+                            ${dest.duration}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        if (loadMore) {
+            // Show loading animation
+            loadingDiv.classList.remove('hidden');
+            setTimeout(() => {
+                loadingDiv.classList.add('hidden');
+                grid.innerHTML += destinationCards;
+            }, 800); // Simulate loading time
+        } else {
+            grid.innerHTML = destinationCards;
+        }
+
+        // Show/hide load more button
+        const hasMoreDestinations = endIndex < filteredDests.length;
+        loadMoreBtn.classList.toggle('hidden', !hasMoreDestinations);
+    };
+    
+    const renderTours = (loadMore = false) => {
+        const grid = document.getElementById('tours-grid');
+        const loadMoreBtn = document.getElementById('load-more-tours');
+        const loadingDiv = document.getElementById('tours-loading');
+        
+        if (!grid) return;
+        
+        const typeFilter = document.getElementById('tour-type-filter').value;
+        const priceFilter = document.getElementById('tour-price-filter').value;
+        const groupSizeFilter = document.getElementById('group-size-filter').value;
+        const searchFilter = document.getElementById('tour-search-input').value.toLowerCase();
+        
+        const filteredTours = tours.filter(tour =>
+            (typeFilter === 'all' || tour.type === typeFilter) &&
+            (priceFilter === 'all' || (priceFilter === 'low' && tour.price < 500) || (priceFilter === 'medium' && tour.price >= 500 && tour.price <= 1500) || (priceFilter === 'high' && tour.price > 1500)) &&
+            (groupSizeFilter === 'all' || tour.groupSize === groupSizeFilter) &&
+            (tour.name.toLowerCase().includes(searchFilter))
+        );
+
+        // Reset pagination when filters change
+        if (!loadMore) {
+            currentToursPage = 1;
+            grid.innerHTML = '';
+        }
+
+        const startIndex = loadMore ? (currentToursPage - 1) * toursPerPage : 0;
+        const endIndex = currentToursPage * toursPerPage;
+        const toursToShow = filteredTours.slice(startIndex, endIndex);
+
+        if (filteredTours.length === 0) {
+            grid.innerHTML = `<p class="text-gray-600 md:col-span-3 text-center">No tours found.</p>`;
+            loadMoreBtn.classList.add('hidden');
+            return;
+        }
+
+        const tourCards = toursToShow.map(tour => `
+            <div class="bg-white rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 tour-card" data-tour-id="${tour.id}">
+                <img src="${tour.image}" alt="${tour.name}" class="w-full h-56 object-cover rounded-lg shadow-md" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found';">
+                <div class="pt-4 flex justify-between items-center">
+                    <h3 class="text-lg font-bold">${tour.name}</h3>
+                    <p class="text-lg font-semibold text-teal-600">$${tour.price}</p>
+                </div>
+                <div class="flex items-center text-sm text-gray-500 mb-3">
+                    <p class="capitalize">${tour.type} Tour</p>
+                    <span class="mx-2">•</span>
+                    <p class="capitalize">${tour.groupSize} Group</p>
+                </div>
+                <button class="w-full bg-green-700 text-white py-2 px-4 rounded-lg hover:bg-green-800 transition-colors">
+                    View Details & Book
+                </button>
+            </div>
+        `).join('');
+
+        if (loadMore) {
+            // Show loading animation
+            loadingDiv.classList.remove('hidden');
+            setTimeout(() => {
+                loadingDiv.classList.add('hidden');
+                grid.innerHTML += tourCards;
+            }, 800); // Simulate loading time
+        } else {
+            grid.innerHTML = tourCards;
+        }
+
+        // Show/hide load more button
+        const hasMoreTours = endIndex < filteredTours.length;
+        loadMoreBtn.classList.toggle('hidden', !hasMoreTours);
+    };
+    
+    const renderUserBookings = () => {
+        const container = document.getElementById('user-bookings-container');
+        const noBookingsDiv = document.getElementById('no-user-bookings');
+        const bookingsList = document.getElementById('user-bookings-list');
+        
+        if (!container || !currentUser) return;
+        
+        const userBookings = bookings.filter(b => b.userId === currentUser.id);
+        
+        if (userBookings.length === 0) {
+            noBookingsDiv.classList.remove('hidden');
+            bookingsList.innerHTML = '';
+        } else {
+            noBookingsDiv.classList.add('hidden');
+            bookingsList.innerHTML = userBookings.map(booking => {
+                const tour = tours.find(t => t.id === booking.tourId);
+                return `
+                    <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">${tour?.name || 'Unknown Tour'}</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                    <div>
+                                        <span class="font-medium">Date:</span> ${booking.date}
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">Guests:</span> ${booking.guests}
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">Total Price:</span> $${booking.totalPrice}
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">Status:</span> 
+                                        <span class="px-2 py-1 rounded-full text-xs ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${booking.status}</span>
+                                    </div>
+                                </div>
+                                ${booking.specialRequests ? `<div class="mt-3"><span class="font-medium text-gray-700">Special Requests:</span> ${booking.specialRequests}</div>` : ''}
+                            </div>
+                            <div class="mt-4 md:mt-0 md:ml-6">
+                                <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 cancel-booking-btn" data-booking-id="${booking.id}">
+                                    Cancel Booking
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    };
+
+    const renderTourDetail = (tourId) => {
+        const tour = tours.find(t => t.id == tourId);
+        if (!tour) return;
+        
+        currentTour = tour;
+        const content = document.getElementById('tour-detail-content');
+        
+        content.innerHTML = `
+            <div class="relative">
+                <img src="${tour.image}" alt="${tour.name}" class="w-full h-96 object-cover">
+                <div class="absolute top-4 left-4">
+                    <button id="back-to-tours" class="bg-white bg-opacity-90 text-gray-800 px-4 py-2 rounded-lg hover:bg-opacity-100 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Tours
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-8">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-900 mb-4">${tour.name}</h1>
+                        <div class="flex items-center mb-6">
+                            <span class="bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm font-medium mr-4">${tour.type} Tour</span>
+                            <span class="text-gray-600 capitalize mr-4">${tour.groupSize} Group</span>
+                            <span class="text-gray-600">${tour.duration || '3-5 days'}</span>
+                        </div>
+                        
+                        <div class="prose max-w-none mb-8">
+                            <h3 class="text-xl font-semibold mb-3">About This Tour</h3>
+                            <p class="text-gray-600 leading-relaxed mb-6">
+                                ${tour.description || `Embark on an unforgettable ${tour.type.toLowerCase()} adventure with our ${tour.name}. This carefully crafted experience offers the perfect blend of excitement, culture, and natural beauty that Sri Lanka is famous for. Our expert guides will ensure you have a safe and memorable journey.`}
+                            </p>
+                            
+                            <h3 class="text-xl font-semibold mb-3">Tour Highlights</h3>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1 mb-6">
+                                ${tour.highlights ? tour.highlights.map(highlight => `<li>${highlight}</li>`).join('') : `
+                                    <li>Professional tour guide</li>
+                                    <li>Transportation</li>
+                                    <li>Entrance fees to attractions</li>
+                                    <li>Refreshments</li>
+                                    <li>Photography assistance</li>
+                                `}
+                            </ul>
+                            
+                            <h3 class="text-xl font-semibold mb-3">What's Included</h3>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                <li>Professional tour guide</li>
+                                <li>Air-conditioned transportation</li>
+                                <li>Entrance fees to all attractions</li>
+                                <li>Meals as specified in itinerary</li>
+                                <li>Photography assistance</li>
+                                <li>Travel insurance</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="bg-gray-50 rounded-xl p-6 sticky top-4">
+                            <div class="text-center mb-6">
+                                <div class="text-3xl font-bold text-teal-600 mb-2">$${tour.price}</div>
+                                <div class="text-gray-600">per person</div>
+                            </div>
+                            
+                            ${currentUser ? `
+                                <form id="booking-form" class="space-y-4">
+                                    <div>
+                                        <label for="booking-date" class="block text-gray-700 font-medium mb-2">Select Date</label>
+                                        <input type="date" id="booking-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required min="${new Date().toISOString().split('T')[0]}">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="booking-guests" class="block text-gray-700 font-medium mb-2">Number of Guests</label>
+                                        <select id="booking-guests" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                                            <option value="">Select guests</option>
+                                            <option value="1">1 Guest</option>
+                                            <option value="2">2 Guests</option>
+                                            <option value="3">3 Guests</option>
+                                            <option value="4">4 Guests</option>
+                                            <option value="5">5 Guests</option>
+                                            <option value="6">6 Guests</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="special-requests" class="block text-gray-700 font-medium mb-2">Special Requests (Optional)</label>
+                                        <textarea id="special-requests" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" placeholder="Any special requirements or requests..."></textarea>
+                                    </div>
+                                    
+                                    <div class="border-t pt-4">
+                                        <div class="flex justify-between items-center mb-4">
+                                            <span class="text-gray-700">Total Price:</span>
+                                            <span id="total-price" class="text-xl font-bold text-teal-600">$${tour.price}</span>
+                                        </div>
+                                        <button type="submit" class="w-full bg-green-700 text-white py-3 px-6 rounded-lg hover:bg-green-800 font-medium transition-colors">
+                                            Book Now
+                                        </button>
+                                    </div>
+                                </form>
+                            ` : `
+                                <div class="text-center">
+                                    <p class="text-gray-600 mb-4">Please log in to book this tour</p>
+                                    <button class="w-full bg-green-700 text-white py-3 px-6 rounded-lg hover:bg-green-800 font-medium nav-link" data-target="login">
+                                        Login to Book
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Update total price when guests change
+        const guestsSelect = document.getElementById('booking-guests');
+        const totalPriceSpan = document.getElementById('total-price');
+        
+        if (guestsSelect && totalPriceSpan) {
+            guestsSelect.addEventListener('change', () => {
+                const guests = parseInt(guestsSelect.value) || 1;
+                const total = tour.price * guests;
+                totalPriceSpan.textContent = `$${total}`;
+            });
+        }
+    };
+
+    const renderDestinationDetail = (destinationId) => {
+        const destination = destinations.find(d => d.id == destinationId);
+        if (!destination) return;
+        
+        currentDestination = destination;
+        const content = document.getElementById('destination-detail-content');
+        
+        content.innerHTML = `
+            <div class="relative">
+                <img src="${destination.images[0]}" alt="${destination.title}" class="w-full h-96 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found';">
+                <div class="absolute top-4 left-4">
+                    <button id="back-to-destinations" class="bg-white bg-opacity-90 text-gray-800 px-4 py-2 rounded-lg hover:bg-opacity-100 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Destinations
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-8">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-900 mb-4">${destination.title}</h1>
+                        <div class="flex items-center mb-6">
+                            <span class="bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm font-medium mr-4">📍 ${destination.location} Province</span>
+                            <span class="text-gray-600">${destination.duration}</span>
+                        </div>
+                        
+                        <div class="prose max-w-none mb-8">
+                            <h3 class="text-xl font-semibold mb-3">About This Destination</h3>
+                            <p class="text-gray-600 leading-relaxed mb-6">
+                                ${destination.shortDesc} This magnificent destination offers a unique blend of ${destination.activities.join(' and ').toLowerCase()} experiences that will create lasting memories of your visit to Sri Lanka.
+                            </p>
+                            
+                            <h3 class="text-xl font-semibold mb-3">Activities Available</h3>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1 mb-6">
+                                ${destination.activities.map(activity => `<li>${activity}</li>`).join('')}
+                                <li>Photography opportunities</li>
+                                <li>Local cultural experiences</li>
+                                <li>Guided tours available</li>
+                            </ul>
+                            
+                            <h3 class="text-xl font-semibold mb-3">Best Time to Visit</h3>
+                            <p class="text-gray-600 mb-4">
+                                The ideal time to visit ${destination.title} depends on the activities you're interested in. Generally, the dry season (December to March) offers the best weather conditions for most activities.
+                            </p>
+                            
+                            <h3 class="text-xl font-semibold mb-3">Getting There</h3>
+                            <p class="text-gray-600">
+                                ${destination.title} is located in the ${destination.location} Province of Sri Lanka. Various transportation options are available including private tours, public transport, and guided excursions.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="bg-gray-50 rounded-xl p-6 sticky top-4">
+                            <div class="text-center mb-6">
+                                <h3 class="text-2xl font-bold text-teal-600 mb-2">Explore ${destination.title}</h3>
+                                <div class="text-gray-600">Recommended duration: ${destination.duration}</div>
+                            </div>
+                            
+                            <div class="space-y-4 mb-6">
+                                <div class="flex items-center">
+                                    <i class="fas fa-map-marker-alt text-teal-500 mr-3"></i>
+                                    <span class="text-gray-700">${destination.location} Province</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock text-teal-500 mr-3"></i>
+                                    <span class="text-gray-700">${destination.duration}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-tags text-teal-500 mr-3"></i>
+                                    <span class="text-gray-700">${destination.activities.join(', ')}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                ${currentUser ? `
+                                    <button id="add-to-wishlist-btn" class="w-full bg-gray-200 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-300 font-medium transition-colors" data-destination-id="${destination.id}">
+                                        <i class="fas fa-heart mr-2"></i>Add to Wishlist
+                                    </button>
+                                ` : `
+                                    <button id="add-to-wishlist-btn" class="w-full bg-gray-200 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-300 font-medium transition-colors" data-destination-id="${destination.id}">
+                                        <i class="fas fa-heart mr-2"></i>Login to Add to Wishlist
+                                    </button>
+                                `}
+                                <button id="share-destination-btn" class="w-full bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 font-medium transition-colors" data-destination-id="${destination.id}">
+                                    <i class="fas fa-share-alt mr-2"></i>Share Destination
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Update wishlist button state if user is logged in
+        if (currentUser) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+                const isInWishlist = wishlists.some(w => w.userId === currentUser.id && w.destinationId === destination.id);
+                updateWishlistButton(destination.id, isInWishlist);
+            }, 200);
+        }
+    };
+
+    const renderGallery = () => {
+        const grid = document.getElementById('gallery-grid');
+        if (!grid) return;
+        
+        // Use the dedicated gallery images array
+        grid.innerHTML = galleryImages.map(img => `
+            <div class="overflow-hidden rounded-lg shadow-md">
+                <img src="${img.url}" alt="${img.title}" class="w-full h-full object-cover cursor-pointer hover:opacity-80 hover:scale-105 transition-all duration-300 gallery-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found';" title="${img.title} - ${img.description}">
+            </div>
+        `).join('');
+    };
+
+    // Wishlist Functions
+    const addToWishlist = (destinationId) => {
+        if (!currentUser) {
+            navigateToPage('login');
+            showAlert('Login Required', 'Please log in to add destinations to your wishlist.');
+            return;
+        }
+        
+        const existingWishlistItem = wishlists.find(w => w.userId === currentUser.id && w.destinationId === destinationId);
+        if (existingWishlistItem) {
+            showAlert('Already in Wishlist', 'This destination is already in your wishlist.');
+            // Update button to show correct state
+            setTimeout(() => updateWishlistButton(destinationId, true), 100);
+            return;
+        }
+        
+        const newWishlistItem = {
+            id: Date.now(),
+            userId: currentUser.id,
+            destinationId: destinationId,
+            addedDate: new Date().toISOString()
+        };
+        
+        wishlists.push(newWishlistItem);
+        
+        showAlert('Added to Wishlist Successfully!', 'Destination has been added to your wishlist!');
+        
+        // Update button state and wishlist display immediately
+        updateWishlistButton(destinationId, true);
+        
+        // Also update after a short delay to ensure DOM is updated
+        setTimeout(() => {
+            updateWishlistButton(destinationId, true);
+            renderUserWishlist();
+        }, 100);
+    };
+
+    const removeFromWishlist = (destinationId) => {
+        const wishlistIndex = wishlists.findIndex(w => w.userId === currentUser.id && w.destinationId === destinationId);
+        if (wishlistIndex > -1) {
+            wishlists.splice(wishlistIndex, 1);
+            showAlert('Removed from Wishlist', 'Destination has been removed from your wishlist.');
+            
+            // Update button state and wishlist display immediately
+            updateWishlistButton(destinationId, false);
+            
+            // Also update after a short delay to ensure DOM is updated
+            setTimeout(() => {
+                updateWishlistButton(destinationId, false);
+                renderUserWishlist();
+            }, 100);
+        }
+    };
+
+    const updateWishlistButton = (destinationId, isInWishlist) => {
+        const btn = document.getElementById('add-to-wishlist-btn');
+        if (btn && btn.dataset.destinationId == destinationId) {
+            if (isInWishlist) {
+                btn.innerHTML = '<i class="fas fa-heart-broken mr-2"></i>Remove from Wishlist';
+                btn.className = 'w-full bg-red-200 text-red-700 py-3 px-6 rounded-lg hover:bg-red-300 font-medium transition-colors';
+            } else {
+                btn.innerHTML = '<i class="fas fa-heart mr-2"></i>Add to Wishlist';
+                btn.className = 'w-full bg-gray-200 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-300 font-medium transition-colors';
+            }
+        }
+    };
+
+    const renderUserWishlist = () => {
+        const container = document.getElementById('user-wishlist-container');
+        const noWishlistDiv = document.getElementById('no-user-wishlist');
+        const wishlistGrid = document.getElementById('user-wishlist-grid');
+        
+        if (!container || !currentUser) return;
+        
+        const userWishlistItems = wishlists.filter(w => w.userId === currentUser.id);
+        
+        if (userWishlistItems.length === 0) {
+            if (noWishlistDiv) noWishlistDiv.classList.remove('hidden');
+            if (wishlistGrid) wishlistGrid.classList.add('hidden');
+            return;
+        }
+        
+        if (noWishlistDiv) noWishlistDiv.classList.add('hidden');
+        if (wishlistGrid) wishlistGrid.classList.remove('hidden');
+        
+        const wishlistCards = userWishlistItems.map(wishlistItem => {
+            const destination = destinations.find(d => d.id === wishlistItem.destinationId);
+            if (!destination) return '';
+            
+            return `
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                    <img src="${destination.images[0]}" alt="${destination.title}" class="w-full h-48 object-cover cursor-pointer destination-card" data-destination-id="${destination.id}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found';">
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold mb-2 cursor-pointer destination-card" data-destination-id="${destination.id}">${destination.title}</h3>
+                        <p class="text-sm text-gray-500 mb-2">📍 ${destination.location} Province</p>
+                        <p class="text-gray-600 text-sm mb-3">${destination.shortDesc}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-400">Added ${new Date(wishlistItem.addedDate).toLocaleDateString()}</span>
+                            <button class="text-red-500 hover:text-red-700 text-sm" onclick="removeFromWishlist(${destination.id})">
+                                <i class="fas fa-trash mr-1"></i>Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).filter(card => card !== '').join('');
+        
+        if (wishlistGrid) wishlistGrid.innerHTML = wishlistCards;
+    };
+
+    const shareDestination = (destinationId) => {
+        const destination = destinations.find(d => d.id === destinationId);
+        if (!destination) return;
+        
+        const currentUrl = window.location.href.split('#')[0];
+        const shareUrl = `${currentUrl}#destination-${destinationId}`;
+        
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showAlert('Link Copied!', `Link to ${destination.title} has been copied to your clipboard.`);
+            }).catch(() => {
+                fallbackCopyToClipboard(shareUrl, destination.title);
+            });
+        } else {
+            fallbackCopyToClipboard(shareUrl, destination.title);
+        }
+    };
+
+    const fallbackCopyToClipboard = (text, destinationTitle) => {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showAlert('Link Copied!', `Link to ${destinationTitle} has been copied to your clipboard.`);
+        } catch (err) {
+            showAlert('Copy Failed', 'Could not copy link. Please copy the URL manually from your browser.');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    };
+
+    // Profile Editing Functions
+    const toggleProfileEditMode = (isEditMode) => {
+        const displayMode = document.getElementById('profile-display-mode');
+        const editMode = document.getElementById('profile-edit-mode');
+        
+        if (isEditMode) {
+            displayMode.classList.add('hidden');
+            editMode.classList.remove('hidden');
+            
+            // Populate edit form with current user data
+            document.getElementById('edit-user-name').value = currentUser.name;
+            document.getElementById('edit-user-email').value = currentUser.email;
+            document.getElementById('edit-user-password').value = '';
+            document.getElementById('edit-user-confirm-password').value = '';
+        } else {
+            displayMode.classList.remove('hidden');
+            editMode.classList.add('hidden');
+        }
+    };
+
+    const updateUserProfile = (name, email, password = null) => {
+        // Find user in array and update
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex > -1) {
+            users[userIndex].name = name;
+            users[userIndex].email = email;
+            if (password) {
+                users[userIndex].password = password;
+            }
+            
+            // Update current user object
+            currentUser.name = name;
+            currentUser.email = email;
+            if (password) {
+                currentUser.password = password;
+            }
+            
+            // Update display
+            document.getElementById('user-profile-name').textContent = name;
+            document.getElementById('user-profile-email').textContent = email;
+            
+            // Update header if it shows user name
+            const headerUserName = document.getElementById('user-name-display');
+            if (headerUserName) {
+                headerUserName.textContent = name;
+            }
+            
+            showAlert('Profile Updated', 'Your profile has been updated successfully!');
+            toggleProfileEditMode(false);
+        }
+    };
+
+    const renderAdminTables = () => {
+        const destTbody = document.getElementById('admin-destinations-table-body');
+        if (destTbody) destTbody.innerHTML = destinations.map(dest => `
+            <tr class="border-b hover:bg-gray-50 transition-colors">
+                <td class="p-3">
+                    <img src="${dest.images[0] || './images/default-destination.png'}" 
+                         alt="${dest.title}" 
+                         class="w-16 h-12 object-cover rounded-md border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                         onerror="this.onerror=null;this.src='https://placehold.co/64x48/cccccc/ffffff?text=No+Image';"
+                         title="Click to view full image"
+                         onclick="showImageModal('${dest.images[0] || ''}', '${dest.title}')">
+                </td>
+                <td class="p-3 font-medium">${dest.title}</td> 
+                <td class="p-3 text-gray-600">${dest.location}</td> 
+                <td class="p-3 text-gray-600">Admin User</td>
+                <td class="p-3">
+                    <button class="text-blue-500 hover:text-blue-700 hover:underline mr-4 edit-destination-btn font-medium" data-id="${dest.id}">Edit</button>
+                    <button class="text-red-500 hover:text-red-700 hover:underline delete-destination-btn font-medium" data-id="${dest.id}">Delete</button>
+                </td>
+            </tr>`).join('');
+        
+        const tourTbody = document.getElementById('admin-tours-table-body');
+        if (tourTbody) tourTbody.innerHTML = tours.map(tour => `
+            <tr class="border-b hover:bg-gray-50 transition-colors">
+                <td class="p-3">
+                    <img src="${tour.image || './images/default-tour.png'}" 
+                         alt="${tour.name}" 
+                         class="w-16 h-12 object-cover rounded-md border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                         onerror="this.onerror=null;this.src='https://placehold.co/64x48/cccccc/ffffff?text=No+Image';"
+                         title="Click to view full image"
+                         onclick="showImageModal('${tour.image || ''}', '${tour.name}')">
+                </td>
+                <td class="p-3 font-medium">${tour.name}</td> 
+                <td class="p-3 text-gray-600">$${tour.price}</td>
+                <td class="p-3">
+                    <button class="text-blue-500 hover:text-blue-700 hover:underline mr-4 edit-tour-btn font-medium" data-id="${tour.id}">Edit</button>
+                    <button class="text-red-500 hover:text-red-700 hover:underline delete-tour-btn font-medium" data-id="${tour.id}">Delete</button>
+                </td>
+            </tr>`).join('');
+            
+        const bookingsTbody = document.getElementById('admin-bookings-table-body');
+        if (bookingsTbody) bookingsTbody.innerHTML = bookings.map(booking => {
+            const tour = tours.find(t => t.id === booking.tourId);
+            const user = users.find(u => u.id === booking.userId);
+            return `
+                <tr class="border-b">
+                    <td class="p-3">${tour?.name || 'Unknown Tour'}</td>
+                    <td class="p-3">${user?.name || 'Unknown User'}</td>
+                    <td class="p-3">${booking.guests}</td>
+                    <td class="p-3">${booking.date}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Update dashboard stats
+        updateAdminStats();
+    };
+
+    const renderAdminGallery = () => {
+        const grid = document.getElementById('admin-gallery-grid');
+        if (!grid) return;
+        
+        grid.innerHTML = galleryImages.map(img => `
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                <img src="${img.url}" alt="${img.title}" class="w-full h-32 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Image+Not+Found';">
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm mb-1">${img.title}</h3>
+                    <p class="text-xs text-gray-500 mb-2">${img.category}</p>
+                    <p class="text-xs text-gray-600 mb-3">${img.description}</p>
+                    <div class="flex justify-between">
+                        <button class="text-blue-500 hover:text-blue-700 text-xs edit-gallery-btn" data-id="${img.id}">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                        <button class="text-red-500 hover:text-red-700 text-xs delete-gallery-btn" data-id="${img.id}">
+                            <i class="fas fa-trash mr-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const addGalleryImage = (title, description, url, category) => {
+        const newImage = {
+            id: Math.max(0, ...galleryImages.map(img => img.id)) + 1,
+            title,
+            description,
+            url,
+            category
+        };
+        
+        galleryImages.push(newImage);
+        renderAdminGallery();
+        renderGallery(); // Update main gallery
+        showAlert('Success', 'Image added to gallery successfully!');
+    };
+
+    const updateGalleryImage = (id, title, description, url, category) => {
+        const index = galleryImages.findIndex(img => img.id === id);
+        if (index > -1) {
+            galleryImages[index] = { id, title, description, url, category };
+            renderAdminGallery();
+            renderGallery(); // Update main gallery
+            showAlert('Success', 'Image updated successfully!');
+        }
+    };
+
+    const deleteGalleryImage = (id) => {
+        const index = galleryImages.findIndex(img => img.id === id);
+        if (index > -1) {
+            galleryImages.splice(index, 1);
+            renderAdminGallery();
+            renderGallery(); // Update main gallery
+            showAlert('Success', 'Image deleted successfully!');
+        }
+    };
+
+    const renderChart = () => {
+        const ctx = document.getElementById('destinationsChart');
+        if (!ctx) return;
+        const locationCounts = destinations.reduce((acc, {location}) => ({...acc, [location]: (acc[location] || 0) + 1}), {});
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(locationCounts),
+                datasets: [{ label: '# of Destinations', data: Object.values(locationCounts), backgroundColor: 'rgba(20, 184, 166, 0.6)', borderColor: 'rgba(13, 148, 136, 1)', borderWidth: 1 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    };
+
+    // --- UI & STATE UPDATE ---
+    const updateUIForLogin = () => {
+        document.querySelectorAll('[data-target="account"]').forEach(link => link.classList.remove('hidden'));
+        document.getElementById('login-btn').classList.add('hidden');
+        document.getElementById('logout-btn').classList.remove('hidden');
+        document.getElementById('mobile-login-btn').classList.add('hidden');
+        document.getElementById('mobile-logout-btn').classList.remove('hidden');
+        document.getElementById('mobile-user-account-link').classList.remove('hidden');
+        
+        if (currentUser?.role === 'admin') {
+            document.querySelectorAll('[data-target="admin"]').forEach(link => link.classList.remove('hidden'));
+            document.getElementById('mobile-admin-link').classList.remove('hidden');
+        }
+    };
+    
+    const updateUIForLogout = () => {
+        document.querySelectorAll('[data-target="account"], [data-target="admin"]').forEach(link => link.classList.add('hidden'));
+        document.getElementById('login-btn').classList.remove('hidden');
+        document.getElementById('logout-btn').classList.add('hidden');
+        document.getElementById('mobile-login-btn').classList.remove('hidden');
+        document.getElementById('mobile-logout-btn').classList.add('hidden');
+        document.getElementById('mobile-user-account-link').classList.add('hidden');
+        document.getElementById('mobile-admin-link').classList.add('hidden');
+        navigateToPage('home-page');
+    };
+
+    const navigateToPage = (pageId) => {
+        document.querySelectorAll('.page-section').forEach(sec => sec.classList.toggle('active', sec.id === pageId));
+        document.getElementById('main-header').style.display = (pageId === 'admin') ? 'none' : 'block';
+
+        if (pageId === 'admin') {
+            document.getElementById('admin-user-name').textContent = currentUser.name;
+            document.getElementById('admin-user-email').textContent = currentUser.email;
+            navigateToAdminSection('admin-dashboard');
+        }
+        
+        if (pageId === 'account' && currentUser) {
+            document.getElementById('user-profile-name').textContent = currentUser.name;
+            document.getElementById('user-profile-email').textContent = currentUser.email;
+            renderUserBookings();
+            renderUserWishlist();
+        }
+    };
+
+    const updateAdminStats = () => {
+        document.getElementById('total-users').textContent = users.length;
+        document.getElementById('total-destinations').textContent = destinations.length;
+        document.getElementById('total-bookings').textContent = bookings.length;
+    };
+
+    // Destination form management functions
+    const loadDestinationForEdit = (destination) => {
+        document.getElementById('post-destination-form-title').textContent = 'Edit Destination';
+        document.getElementById('post-destination-submit-btn').textContent = 'Update Destination';
+        document.getElementById('post-destination-id').value = destination.id;
+        document.getElementById('post-destination-title').value = destination.title;
+        document.getElementById('post-destination-location').value = destination.location;
+        document.getElementById('post-destination-activities').value = destination.activities.join(', ');
+        document.getElementById('post-destination-duration').value = destination.duration;
+        document.getElementById('post-destination-short-desc').value = destination.shortDesc;
+        document.getElementById('post-destination-images-url').value = destination.images[0] || '';
+        
+        // Show image preview if image exists
+        if (destination.images[0]) {
+            const previewContainer = document.getElementById('destination-image-preview');
+            const previewImg = document.getElementById('destination-preview-img');
+            previewImg.src = destination.images[0];
+            previewContainer.classList.remove('hidden');
+        }
+    };
+
+    const clearDestinationForm = () => {
+        document.getElementById('post-destination-form-title').textContent = 'Add New Destination';
+        document.getElementById('post-destination-submit-btn').textContent = 'Submit';
+        document.getElementById('post-destination-form').reset();
+        document.getElementById('post-destination-id').value = '';
+        
+        // Hide image preview
+        document.getElementById('destination-image-preview').classList.add('hidden');
+    };
+
+    // Tour form management functions
+    const loadTourForEdit = (tour) => {
+        document.getElementById('post-tour-form-title').textContent = 'Edit Tour';
+        document.getElementById('post-tour-submit-btn').textContent = 'Update Tour';
+        document.getElementById('post-tour-id').value = tour.id;
+        document.getElementById('post-tour-name').value = tour.name;
+        document.getElementById('post-tour-type').value = tour.type;
+        document.getElementById('post-tour-price').value = tour.price;
+        document.getElementById('post-tour-group-size').value = tour.groupSize;
+        document.getElementById('post-tour-image').value = tour.image || '';
+        
+        // Show image preview if image exists
+        if (tour.image) {
+            const previewContainer = document.getElementById('tour-image-preview');
+            const previewImg = document.getElementById('tour-preview-img');
+            previewImg.src = tour.image;
+            previewContainer.classList.remove('hidden');
+        }
+    };
+
+    const clearTourForm = () => {
+        document.getElementById('post-tour-form-title').textContent = 'Add New Tour';
+        document.getElementById('post-tour-submit-btn').textContent = 'Submit';
+        document.getElementById('post-tour-form').reset();
+        document.getElementById('post-tour-id').value = '';
+        
+        // Hide image preview
+        document.getElementById('tour-image-preview').classList.add('hidden');
+    };
+
+    const navigateToAdminSection = (sectionId) => {
+        document.querySelectorAll('.admin-section').forEach(sec => sec.classList.toggle('active', sec.id === sectionId));
+        if (sectionId === 'admin-dashboard') {
+            updateAdminStats();
+            renderChart();
+        }
+        if (sectionId === 'admin-destinations' || sectionId === 'admin-tours') renderAdminTables();
+        if (sectionId === 'admin-gallery') renderAdminGallery();
+    };
+    
+    const initHeroSlideshow = () => {
+        const slideshowContainer = document.getElementById('hero-slideshow');
+        const dotsContainer = document.getElementById('sliderDots');
+        const prevButton = document.getElementById('prevSlide');
+        const nextButton = document.getElementById('nextSlide');
+        
+        if (!slideshowContainer) return;
+        
+        const images = [
+            {
+                url: 'https://www.distinctdestinations.in/DistinctDestinationsBackEndImg/BlogImage/kandy-perahera-a-many-splendoured-spectacle-L-distinctdestinations.jpg',
+                title: 'Kandy Perahera Festival'
+            },
+            {
+                url: 'https://whenonearth.net/wp-content/uploads/Sigiriya-Rock-Sri-Lanka.jpg',
+                title: 'Sigiriya Rock Fortress'
+            },
+            {
+                url: 'https://t4.ftcdn.net/jpg/00/44/24/23/360_F_44242356_PNJyjOEQiHHy0Yro4OLnIhEZiEG1fBwv.jpg',
+                title: 'Tea Plantations'
+            },
+            {
+                url: 'https://www.andbeyond.com/wp-content/uploads/sites/5/colombo-sri-lanka.jpg',
+                title: 'Colombo City'
+            }
+        ];
+
+        let currentSlide = 0;
+        let slideInterval;
+
+        // Create slides
+        images.forEach((img, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'hero-slide';
+            slide.style.backgroundImage = `url('${img.url}')`;
+            slide.setAttribute('aria-label', img.title);
+            if (index === 0) slide.classList.add('active');
+            slideshowContainer.appendChild(slide);
+        });
+
+        // Create navigation dots
+        if (dotsContainer) {
+            images.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.className = 'slider-dot';
+                dot.setAttribute('aria-label', `Go to slide ${index + 1}`);
+                if (index === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(index));
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        const goToSlide = (slideIndex) => {
+            const slides = slideshowContainer.children;
+            const dots = dotsContainer?.children || [];
+
+            // Remove active class from current slide and dot
+            slides[currentSlide]?.classList.remove('active');
+            dots[currentSlide]?.classList.remove('active');
+
+            // Update current slide index
+            currentSlide = slideIndex;
+
+            // Add active class to new slide and dot
+            slides[currentSlide]?.classList.add('active');
+            dots[currentSlide]?.classList.add('active');
+
+            // Reset auto-play timer
+            resetAutoPlay();
+        };
+
+        const nextSlide = () => {
+            const nextIndex = (currentSlide + 1) % images.length;
+            goToSlide(nextIndex);
+        };
+
+        const prevSlide = () => {
+            const prevIndex = (currentSlide - 1 + images.length) % images.length;
+            goToSlide(prevIndex);
+        };
+
+        const startAutoPlay = () => {
+            slideInterval = setInterval(nextSlide, 5000); // Change slide every 5 seconds
+        };
+
+        const stopAutoPlay = () => {
+            clearInterval(slideInterval);
+        };
+
+        const resetAutoPlay = () => {
+            stopAutoPlay();
+            startAutoPlay();
+        };
+
+        // Event listeners for navigation
+        if (nextButton) {
+            nextButton.addEventListener('click', () => {
+                nextSlide();
+            });
+        }
+
+        if (prevButton) {
+            prevButton.addEventListener('click', () => {
+                prevSlide();
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'ArrowRight') {
+                nextSlide();
+            }
+        });
+
+        // Pause auto-play on hover
+        slideshowContainer.addEventListener('mouseenter', stopAutoPlay);
+        slideshowContainer.addEventListener('mouseleave', startAutoPlay);
+
+        // Touch/swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        slideshowContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        slideshowContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        const handleSwipe = () => {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    nextSlide(); // Swipe left - next slide
+                } else {
+                    prevSlide(); // Swipe right - previous slide
+                }
+            }
+        };
+
+        // Start auto-play
+        startAutoPlay();
+    };
+
+    // --- EVENT HANDLERS ---
+    document.body.addEventListener('click', (e) => {
+        const navLink = e.target.closest('.nav-link');
+        if (navLink) {
+            e.preventDefault();
+            const targetId = navLink.dataset.target;
+            const href = navLink.getAttribute('href');
+            
+            if (targetId) { // It's a page switch
+                navigateToPage(targetId);
+            } else if (href && href.startsWith('#')) { // It's a scroll link
+                navigateToPage('home-page');
+                setTimeout(() => {
+                    const element = document.querySelector(href);
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                }, 0);
+            }
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        // Tour card clicks
+        if (e.target.closest('.tour-card')) {
+            const tourId = e.target.closest('.tour-card').dataset.tourId;
+            if (tourId) {
+                renderTourDetail(parseInt(tourId));
+                navigateToPage('tour-detail');
+            }
+        }
+        
+        // Destination card clicks
+        if (e.target.closest('.destination-card')) {
+            const destinationId = e.target.closest('.destination-card').dataset.destinationId;
+            if (destinationId) {
+                renderDestinationDetail(parseInt(destinationId));
+                navigateToPage('destination-detail');
+            }
+        }
+        
+        // Back to tours button
+        if (e.target.id === 'back-to-tours') {
+            navigateToPage('home-page');
+            setTimeout(() => {
+                document.getElementById('tours').scrollIntoView({ behavior: 'smooth' });
+            }, 0);
+        }
+        
+        // Back to destinations button
+        if (e.target.id === 'back-to-destinations') {
+            navigateToPage('home-page');
+            setTimeout(() => {
+                document.getElementById('destinations').scrollIntoView({ behavior: 'smooth' });
+            }, 0);
+        }
+        
+        // Add to wishlist button
+        if (e.target.id === 'add-to-wishlist-btn') {
+            const destinationId = parseInt(e.target.dataset.destinationId);
+            
+            // Check current button text to determine action instead of checking wishlist state
+            const buttonText = e.target.textContent.trim();
+            
+            if (buttonText.includes('Remove from Wishlist')) {
+                removeFromWishlist(destinationId);
+            } else {
+                addToWishlist(destinationId);
+            }
+        }
+        
+        // Share destination button
+        if (e.target.id === 'share-destination-btn') {
+            const destinationId = parseInt(e.target.dataset.destinationId);
+            shareDestination(destinationId);
+        }
+        
+        // Logout buttons
+        if (e.target.id === 'logout-btn' || e.target.id === 'mobile-logout-btn') {
+            currentUser = null;
+            updateUIForLogout();
+            showAlert('Logged Out', 'You have been successfully logged out.');
+        }
+
+        if (e.target.closest('.admin-nav-link')) {
+            e.preventDefault();
+            navigateToAdminSection(e.target.closest('.admin-nav-link').dataset.target);
+        }
+
+        if (e.target.id === 'admin-logout-btn') {
+            currentUser = null;
+            updateUIForLogout();
+        }
+
+        // Cancel booking
+        if (e.target.classList.contains('cancel-booking-btn')) {
+            const bookingId = parseInt(e.target.dataset.bookingId);
+            showConfirm('Cancel Booking', 'Are you sure you want to cancel this booking?', () => {
+                bookings = bookings.filter(b => b.id !== bookingId);
+                renderUserBookings();
+                updateAdminStats();
+                showAlert('Booking Cancelled', 'Your booking has been cancelled successfully.');
+            });
+        }
+
+        if (e.target.id === 'mobile-menu-button') document.getElementById('mobile-menu').classList.toggle('hidden');
+        if (e.target.classList.contains('gallery-image')) {
+            document.getElementById('lightbox-modal').style.display = 'flex';
+            document.getElementById('lightbox-image').src = e.target.src;
+        }
+        if (e.target.id === 'lightbox-modal' || e.target.classList.contains('lightbox-close')) {
+            document.getElementById('lightbox-modal').style.display = 'none';
+        }
+
+        // Admin actions
+        if (e.target.classList.contains('delete-destination-btn')) {
+            if (!currentUser || currentUser.role !== 'admin') {
+                showAlert('Access Denied', 'Only administrators can delete destinations.');
+                return;
+            }
+            const id = e.target.dataset.id;
+            showConfirm('Delete Destination', 'Are you sure?', () => {
+                destinations = destinations.filter(d => d.id != id);
+                renderAdminTables(); 
+                updateAdminStats();
+                renderChart(); 
+                renderDestinations();
+                showAlert('Success', 'Destination deleted.');
+            });
+        }
+        if (e.target.classList.contains('delete-tour-btn')) {
+            if (!currentUser || currentUser.role !== 'admin') {
+                showAlert('Access Denied', 'Only administrators can delete tours.');
+                return;
+            }
+            const id = e.target.dataset.id;
+            showConfirm('Delete Tour', 'Are you sure?', () => {
+                tours = tours.filter(t => t.id != id);
+                renderAdminTables(); 
+                updateAdminStats();
+                renderTours();
+                showAlert('Success', 'Tour deleted.');
+            });
+        }
+        if (e.target.id === 'add-destination-btn' || e.target.classList.contains('edit-destination-btn')) {
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showAlert('Access Denied', 'Only administrators can add or edit destinations.');
+                return;
+            }
+            
+            // If editing, load destination data
+            if (e.target.classList.contains('edit-destination-btn')) {
+                const destinationId = parseInt(e.target.dataset.id);
+                const destination = destinations.find(d => d.id === destinationId);
+                if (destination) {
+                    loadDestinationForEdit(destination);
+                } else {
+                    showAlert('Error', 'Destination not found.');
+                    return;
+                }
+            } else {
+                // Clear form for new destination
+                clearDestinationForm();
+            }
+            
+            navigateToPage('post-destination');
+        }
+        
+        // Gallery management actions
+        if (e.target.classList.contains('edit-gallery-btn')) {
+            const id = parseInt(e.target.dataset.id);
+            const image = galleryImages.find(img => img.id === id);
+            if (image) {
+                // Populate form with existing data
+                document.getElementById('gallery-title').value = image.title;
+                document.getElementById('gallery-description').value = image.description;
+                document.getElementById('gallery-url').value = image.url;
+                document.getElementById('gallery-category').value = image.category;
+                
+                // Mark form as editing
+                const form = document.getElementById('add-gallery-form');
+                form.dataset.editId = id;
+                document.querySelector('#add-gallery-form button[type="submit"]').textContent = 'Update Image';
+                
+                // Scroll to form
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        if (e.target.classList.contains('delete-gallery-btn')) {
+            const id = parseInt(e.target.dataset.id);
+            const image = galleryImages.find(img => img.id === id);
+            showConfirm('Delete Image', `Are you sure you want to delete "${image?.title}"?`, () => {
+                deleteGalleryImage(id);
+            });
+        }
+        
+        if (e.target.id === 'cancel-gallery-add') {
+            const form = document.getElementById('add-gallery-form');
+            form.reset();
+            delete form.dataset.editId;
+            document.querySelector('#add-gallery-form button[type="submit"]').textContent = 'Add Image';
+        }
+        
+        // Profile editing buttons
+        if (e.target.id === 'edit-profile-btn') {
+            toggleProfileEditMode(true);
+        }
+        
+        if (e.target.id === 'cancel-edit-profile-btn') {
+            toggleProfileEditMode(false);
+        }
+         if (e.target.id === 'add-tour-btn' || e.target.classList.contains('edit-tour-btn')) {
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showAlert('Access Denied', 'Only administrators can add or edit tours.');
+                return;
+            }
+            
+            // If editing, load tour data
+            if (e.target.classList.contains('edit-tour-btn')) {
+                const tourId = parseInt(e.target.dataset.id);
+                const tour = tours.find(t => t.id === tourId);
+                if (tour) {
+                    loadTourForEdit(tour);
+                } else {
+                    showAlert('Error', 'Tour not found.');
+                    return;
+                }
+            } else {
+                // Clear form for new tour
+                clearTourForm();
+            }
+            
+            navigateToPage('post-tour');
+        }
+        
+        if (e.target.id === 'cancel-destination-post' || e.target.id === 'cancel-tour-post') {
+            navigateToPage('admin');
+        }
+        
+        // Load More buttons
+        if (e.target.id === 'load-more-destinations') {
+            currentDestinationsPage++;
+            renderDestinations(true);
+        }
+        
+        if (e.target.id === 'load-more-tours') {
+            currentToursPage++;
+            renderTours(true);
+        }
+    });
+
+    // --- Form submissions & Filters ---
+    document.getElementById('login-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const user = users.find(u => u.email === email);
+        if (user) {
+            currentUser = { ...user };
+            updateUIForLogin();
+            if (user.role === 'admin') {
+                navigateToPage('admin');
+            } else {
+                navigateToPage('home-page');
+            }
+            showAlert(`Welcome back, ${currentUser.name}!`, "You have successfully logged in.");
+        } else { showAlert('Login Failed', 'User not found.'); }
+    });
+    
+    // Booking form submission
+    document.body.addEventListener('submit', (e) => {
+        if (e.target.id === 'booking-form') {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                showAlert('Login Required', 'Please log in to book a tour.');
+                return;
+            }
+            
+            const date = document.getElementById('booking-date').value;
+            const guests = parseInt(document.getElementById('booking-guests').value);
+            const specialRequests = document.getElementById('special-requests').value;
+            const totalPrice = currentTour.price * guests;
+            
+            const newBooking = {
+                id: bookings.length + 1,
+                userId: currentUser.id,
+                tourId: currentTour.id,
+                date: date,
+                guests: guests,
+                specialRequests: specialRequests,
+                totalPrice: totalPrice,
+                status: 'confirmed',
+                bookingDate: new Date().toISOString().split('T')[0]
+            };
+            
+            bookings.push(newBooking);
+            
+            // Update admin stats if admin is logged in
+            updateAdminStats();
+            
+            // Show booking confirmation
+            const bookingDetails = document.getElementById('booking-details');
+            bookingDetails.innerHTML = `
+                <h3 class="text-lg font-semibold mb-3">Booking Details</h3>
+                <div class="space-y-2">
+                    <div><span class="font-medium">Tour:</span> ${currentTour.name}</div>
+                    <div><span class="font-medium">Date:</span> ${date}</div>
+                    <div><span class="font-medium">Guests:</span> ${guests}</div>
+                    <div><span class="font-medium">Total Price:</span> $${totalPrice}</div>
+                    <div><span class="font-medium">Booking Reference:</span> VL-${String(newBooking.id).padStart(6, '0')}</div>
+                    ${specialRequests ? `<div><span class="font-medium">Special Requests:</span> ${specialRequests}</div>` : ''}
+                </div>
+            `;
+            
+            navigateToPage('booking-confirmation');
+        }
+        
+        // Gallery form submission
+        if (e.target.id === 'add-gallery-form') {
+            e.preventDefault();
+            
+            const title = document.getElementById('gallery-title').value;
+            const description = document.getElementById('gallery-description').value;
+            const url = document.getElementById('gallery-url').value;
+            const category = document.getElementById('gallery-category').value;
+            
+            if (e.target.dataset.editId) {
+                // Update existing image
+                const editId = parseInt(e.target.dataset.editId);
+                updateGalleryImage(editId, title, description, url, category);
+                delete e.target.dataset.editId;
+                document.querySelector('#add-gallery-form button[type="submit"]').textContent = 'Add Image';
+            } else {
+                // Add new image
+                addGalleryImage(title, description, url, category);
+            }
+            
+            // Reset form
+            e.target.reset();
+        }
+        
+        // Destination form submission
+        if (e.target.id === 'post-destination-form') {
+            e.preventDefault();
+            
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showAlert('Access Denied', 'Only administrators can add or edit destinations.');
+                return;
+            }
+            
+            const destinationId = document.getElementById('post-destination-id').value;
+            const title = document.getElementById('post-destination-title').value.trim();
+            const location = document.getElementById('post-destination-location').value.trim();
+            const activities = document.getElementById('post-destination-activities').value.trim();
+            const duration = document.getElementById('post-destination-duration').value;
+            const shortDesc = document.getElementById('post-destination-short-desc').value.trim();
+            const imageUrl = document.getElementById('post-destination-images-url').value.trim();
+            
+            // Validate form
+            if (!title || !location || !shortDesc) {
+                showAlert('Validation Error', 'Title, location, and description are required.');
+                return;
+            }
+            
+            if (destinationId) {
+                // Update existing destination
+                const destIndex = destinations.findIndex(d => d.id === parseInt(destinationId));
+                if (destIndex > -1) {
+                    destinations[destIndex].title = title;
+                    destinations[destIndex].location = location;
+                    destinations[destIndex].activities = activities ? activities.split(',').map(a => a.trim()) : [];
+                    destinations[destIndex].duration = duration;
+                    destinations[destIndex].shortDesc = shortDesc;
+                    if (imageUrl) destinations[destIndex].images = [imageUrl];
+                    
+                    showAlert('Success', 'Destination updated successfully!');
+                    renderAdminTables();
+                    updateAdminStats();
+                    renderChart();
+                    navigateToPage('admin');
+                }
+            } else {
+                // Add new destination
+                const newDestination = {
+                    id: destinations.length + 1,
+                    userId: currentUser.id,
+                    title: title,
+                    location: location,
+                    activities: activities ? activities.split(',').map(a => a.trim()) : [],
+                    duration: duration,
+                    shortDesc: shortDesc,
+                    images: imageUrl ? [imageUrl] : ['./images/default-destination.png']
+                };
+                
+                destinations.push(newDestination);
+                showAlert('Success', 'Destination added successfully!');
+                renderAdminTables();
+                updateAdminStats();
+                renderChart();
+                renderDestinations();
+                navigateToPage('admin');
+            }
+        }
+        
+        // Tour form submission
+        if (e.target.id === 'post-tour-form') {
+            e.preventDefault();
+            
+            // Check if user is admin
+            if (!currentUser || currentUser.role !== 'admin') {
+                showAlert('Access Denied', 'Only administrators can add or edit tours.');
+                return;
+            }
+            
+            const tourId = document.getElementById('post-tour-id').value;
+            const name = document.getElementById('post-tour-name').value.trim();
+            const type = document.getElementById('post-tour-type').value;
+            const price = parseInt(document.getElementById('post-tour-price').value);
+            const groupSize = document.getElementById('post-tour-group-size').value;
+            const image = document.getElementById('post-tour-image').value.trim();
+            
+            // Validate form
+            if (!name || !type || !price || !groupSize || !image) {
+                showAlert('Validation Error', 'All fields are required.');
+                return;
+            }
+            
+            if (tourId) {
+                // Update existing tour
+                const tourIndex = tours.findIndex(t => t.id === parseInt(tourId));
+                if (tourIndex > -1) {
+                    tours[tourIndex].name = name;
+                    tours[tourIndex].type = type;
+                    tours[tourIndex].price = price;
+                    tours[tourIndex].groupSize = groupSize;
+                    tours[tourIndex].image = image;
+                    
+                    showAlert('Success', 'Tour updated successfully!');
+                    renderAdminTables();
+                    updateAdminStats();
+                    renderTours();
+                    navigateToPage('admin');
+                }
+            } else {
+                // Add new tour
+                const newTour = {
+                    id: tours.length + 1,
+                    name: name,
+                    type: type,
+                    price: price,
+                    groupSize: groupSize,
+                    image: image,
+                    description: `Experience ${name} - ${type.toLowerCase()} tour with amazing ${type.toLowerCase()} activities.`,
+                    highlights: ['Professional guides', 'All equipment included', 'Transportation provided', 'Memorable experience'],
+                    duration: groupSize === 'small' ? '1 day' : groupSize === 'medium' ? '2 days' : '3 days'
+                };
+                
+                tours.push(newTour);
+                showAlert('Success', 'Tour added successfully!');
+                renderAdminTables();
+                updateAdminStats();
+                renderTours();
+                navigateToPage('admin');
+            }
+        }
+        
+        // Profile edit form submission
+        if (e.target.id === 'edit-profile-form') {
+            e.preventDefault();
+            
+            const name = document.getElementById('edit-user-name').value.trim();
+            const email = document.getElementById('edit-user-email').value.trim();
+            const password = document.getElementById('edit-user-password').value;
+            const confirmPassword = document.getElementById('edit-user-confirm-password').value;
+            
+            // Validate form
+            if (!name || !email) {
+                showAlert('Validation Error', 'Name and email are required.');
+                return;
+            }
+            
+            // Check if email is already taken by another user
+            const existingUser = users.find(u => u.email === email && u.id !== currentUser.id);
+            if (existingUser) {
+                showAlert('Email Taken', 'This email is already used by another user.');
+                return;
+            }
+            
+            // Validate password if provided
+            if (password) {
+                if (password.length < 6) {
+                    showAlert('Password Too Short', 'Password must be at least 6 characters long.');
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    showAlert('Password Mismatch', 'Passwords do not match.');
+                    return;
+                }
+            }
+            
+            // Update profile
+            updateUserProfile(name, email, password || null);
+        }
+    });
+    
+    ['province-filter', 'activity-filter', 'duration-filter', 'search-input'].forEach(id => document.getElementById(id)?.addEventListener('input', renderDestinations));
+    document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
+        document.getElementById('province-filter').value = 'all';
+        document.getElementById('activity-filter').value = 'all';
+        document.getElementById('duration-filter').value = 'all';
+        document.getElementById('search-input').value = '';
+        renderDestinations();
+    });
+    ['tour-type-filter', 'tour-price-filter', 'group-size-filter', 'tour-search-input'].forEach(id => document.getElementById(id)?.addEventListener('input', renderTours));
+
+    // --- INITIALIZATION ---
+    const init = () => {
+        // Check if URL contains a shared destination link
+        const hash = window.location.hash;
+        if (hash.startsWith('#destination-')) {
+            const destinationId = parseInt(hash.replace('#destination-', ''));
+            const destination = destinations.find(d => d.id === destinationId);
+            if (destination) {
+                renderDestinationDetail(destinationId);
+                navigateToPage('destination-detail');
+                return;
+            }
+        }
+        
+        navigateToPage('home-page');
+        initHeroSlideshow();
+        renderDestinations();
+        renderTours();
+        renderGallery();
+    };
+
+    // Image preview functionality for destination and tour forms
+    const setupImagePreview = () => {
+        // Destination form image preview
+        const destImageUrlInput = document.getElementById('post-destination-images-url');
+        const destPreviewContainer = document.getElementById('destination-image-preview');
+        const destPreviewImg = document.getElementById('destination-preview-img');
+        
+        if (destImageUrlInput && destPreviewContainer && destPreviewImg) {
+            destImageUrlInput.addEventListener('input', (e) => {
+                const url = e.target.value.trim();
+                if (url) {
+                    destPreviewImg.src = url;
+                    destPreviewContainer.classList.remove('hidden');
+                } else {
+                    destPreviewContainer.classList.add('hidden');
+                }
+            });
+        }
+
+        // Tour form image preview
+        const tourImageUrlInput = document.getElementById('post-tour-image');
+        const tourPreviewContainer = document.getElementById('tour-image-preview');
+        const tourPreviewImg = document.getElementById('tour-preview-img');
+        
+        if (tourImageUrlInput && tourPreviewContainer && tourPreviewImg) {
+            tourImageUrlInput.addEventListener('input', (e) => {
+                const url = e.target.value.trim();
+                if (url) {
+                    tourPreviewImg.src = url;
+                    tourPreviewContainer.classList.remove('hidden');
+                } else {
+                    tourPreviewContainer.classList.add('hidden');
+                }
+            });
+        }
+    };
+
+    // Simple image modal for destination table images
+    const showImageModal = (imageSrc, title) => {
+        if (!imageSrc) return;
+        
+        // Use existing lightbox modal
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const lightboxImage = document.getElementById('lightbox-image');
+        
+        if (lightboxModal && lightboxImage) {
+            lightboxImage.src = imageSrc;
+            lightboxImage.alt = title;
+            lightboxModal.style.display = 'flex';
+        }
+    };
+
+    init();
+    setupImagePreview();
+});
+</script>
+
+</body>
+</html>
