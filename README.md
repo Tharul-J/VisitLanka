@@ -1,6 +1,4 @@
 
-<img width="3000" height="900" alt="visit lanka" src="https://github.com/user-attachments/assets/c660dcdc-23e8-4928-aae9-b31259a39a3e" />
-
 # Visit Lanka - Explore the Pearl of the Indian Ocean
 
 Welcome to **Visit Lanka**! This project is a travel web application dedicated to showcasing the beauty and experiences of Sri Lanka.
@@ -19,6 +17,12 @@ Welcome to **Visit Lanka**! This project is a travel web application dedicated t
 * **Backend:** - PHP
 * **Database:** - MySQL
 
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+![PHP](https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
+<img width="3000" height="900" alt="visit lanka" src="https://github.com/user-attachments/assets/c660dcdc-23e8-4928-aae9-b31259a39a3e" />
 ---
 
 <img width="2000" height="3000" alt="uiux design @ visitlanka" src="https://github.com/user-attachments/assets/019e1d79-f7a9-4208-958d-a90db0076646" />
