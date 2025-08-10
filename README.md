@@ -257,7 +257,6 @@ Visit Lanka/
 7. Add advanced features (caching, optimization)
 
 
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -270,12 +269,6 @@ Visit Lanka/
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-
-**Project Link**: [https://https://github.com/Tharul-J/VisitLanka](https://https://github.com/Tharul-J/VisitLanka)
-
----
-
-**Made with ❤️ for Sri Lankan Tourism**
 ----
 
 © Tharul-J
